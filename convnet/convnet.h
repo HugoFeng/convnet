@@ -3,8 +3,10 @@
 #include "convolutional_layer.h"
 #include "mnist_parser.h"
 #include "layer.h"
-#include "subsampling_layer.h"
+#include "maxpooling_layer.h"
 #include "output_layer.h"
+#include "mnist_parser.h"
+#include "fullyconnected_layer.h"
 
 namespace convnet{
 #define MAX_ITER 100000
@@ -23,8 +25,7 @@ namespace convnet{
 			/* 
 				auto add OutputLayer as the last layer.
 			*/
-			layers.back()->next = (new OutputLayer(layers.back()->out_width_,
-				layers.back()->out_height_, layers.back()->out_depth_));
+			layers.back()->next = (new OutputLayer(layers.back()->out_depth_));
 			layers.back()->next = nullptr;
 
 			/*
@@ -35,6 +36,7 @@ namespace convnet{
 			while (iter < MAX_ITER && !stop){
 				iter++;
 				auto err = train_once();
+				std::cout << err << std::endl;
 				if (err < END_CONDITION) stop = true;
 			}
 		}

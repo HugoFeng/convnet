@@ -1,3 +1,4 @@
+#pragma once
 #include "util.h"
 #include "layer.h"
 
@@ -41,6 +42,62 @@ namespace convnet{
 		}
 
 		void back_prop(){
+			g_.clear();
+			g_.resize(in_width_ * in_height_ * in_depth_);
+			/*update err terms of this layer.*/
+			for (size_t out = 0; out < out_depth_; out++){
+				for (size_t in = 0; in < in_depth_; in++){
+					for (size_t w_ = 0; w_ < out_width_; w_++){
+						for (size_t h_ = 0; h_ < out_height_; h_++){
+							for (size_t y_ = 0; y_ < kernel_size_; y_++){
+								for (size_t x_ = 0; x_ < kernel_size_; x_++){
+									g_[in * in_width_ * in_height_ + (h_ + y_) *
+										in_width_ + (x_ + w_)] += /*next layer err terms*/
+										this->next->g_[out * out_width_ *
+										out_height_ + h_ * out_width_ + w_] * 
+										/*weight*/
+										W_[in * out_depth_ * kernel_size_ * kernel_size_ +
+										out * kernel_size_ * kernel_size_ +
+										kernel_size_ * (kernel_size_ - y_ - 1) +
+										(kernel_size_ - 1 - x_)] * 
+										/*df of input*/
+										df_sigmod(input_[in * in_width_ * in_height_ + (h_ + y_) *
+										in_width_ + (x_ + w_)]);
+									/*eiya, wocao*/
+								}
+							}
+						}
+					}
+				}
+			}
+
+			/*update weight*/
+			for (size_t out = 0; out < out_depth_; out++){
+				for (size_t in = 0; in < in_depth_; in++){
+					for (size_t h_ = 0; h_ < out_height_; h_++){
+						for (size_t w_ = 0; w_ < out_height_; w_++){
+							for (size_t y_ = 0; y_ < kernel_size_; y_++){
+								for (size_t x_ = 0; x_ < kernel_size_; x_++){
+									W_[in * out_depth_ * kernel_size_ * kernel_size_ +
+										out * kernel_size_ * kernel_size_ +
+										kernel_size_ * (kernel_size_ - y_ - 1) +
+										(kernel_size_ - 1 - x_)] +=
+										/*learning rate*/
+										alpha_ *
+										/*input*/
+										input_[in * in_width_ * in_height_ + (h_ + y_) *
+										in_width_ + (x_ + w_)] * 
+										/*next layer err terms*/
+										this->next->g_[out * out_width_ *
+										out_height_ + h_ * out_width_ + w_] 
+										/*weight decay*/
+										;
+								}
+							}
+						}
+					}
+				}
+			}
 
 		}
 
@@ -51,9 +108,9 @@ namespace convnet{
 
 		inline vec_t getInforKernel(size_t in, size_t h_, size_t w_){
 			vec_t r;
-			for (size_t h = 0; h < h_; h++){
-				for (size_t w = 0; w < w_; w++){
-					r.push_back(input_[in * (in_width_ * in_height_) + h_ * in_width_ + w]);
+			for (size_t x = 0; x < kernel_size_; x++){
+				for (size_t y = 0; y < kernel_size_; y++){
+					r.push_back(input_[in * (in_width_ * in_height_) + (h_ + y) * in_width_ + x + w_]);
 				}
 			}
 			return r;
@@ -62,7 +119,8 @@ namespace convnet{
 		inline vec_t get_W_(size_t in, size_t out){
 			vec_t r;
 			for (size_t i = 0; i < kernel_size_ * kernel_size_; i++)
-				r.push_back(W_[in * out_depth_ + out + i]);
+				r.push_back(W_[in * out_depth_ * kernel_size_ * kernel_size_ 
+				+ out * kernel_size_ * kernel_size_ + i]);
 			return r;
 		}
 

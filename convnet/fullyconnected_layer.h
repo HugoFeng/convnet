@@ -5,6 +5,7 @@
 namespace convnet{
 	class FullyConnectedLayer :public Layer
 	{
+	public:
 		FullyConnectedLayer(size_t in_depth, size_t out_depth):
 			Layer(1, 1, in_depth, 1, 1, out_depth)
 		{

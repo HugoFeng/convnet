@@ -40,6 +40,8 @@ namespace convnet{
 				g_[pair.second] = this->next->g_[pair.first];
 		}
 
+		void init_weight(){}
+
 	private:
 		inline float_t max_In_(size_t in_index, size_t h_, size_t w_, size_t out_index){
 			float_t max_pixel = 0;
