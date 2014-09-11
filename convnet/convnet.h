@@ -25,8 +25,7 @@ namespace convnet{
 			/* 
 				auto add OutputLayer as the last layer.
 			*/
-			layers.back()->next = (new OutputLayer(layers.back()->out_depth_));
-			layers.back()->next = nullptr;
+			this ->add_layer(new OutputLayer(layers.back()->out_depth_));
 
 			/*
 				start training...
@@ -41,8 +40,15 @@ namespace convnet{
 			}
 		}
 
-		void test(){
-
+		void test(vec2d_t test_x, vec_t test_y, size_t test_size){
+			test_x_ = test_x, test_y_ = test_y, test_size_ = test_size;
+			int iter = 0;
+			int bang = 0;
+			while (iter < test_size_){
+				iter++;
+				if(test_once()) bang ++;
+			}
+			std::cout << (float)bang / test_size_ << std::endl;
 		}
 
 		void add_layer(Layer* layer){
@@ -53,6 +59,30 @@ namespace convnet{
 		}
 
 	private:
+		size_t max_iter(vec_t v){
+			size_t i = 0;
+			float_t max = v[0];
+			for (size_t j = 1; j < v.size(); j++){
+				if (v[j] > max){
+					max = v[j];
+					i = j;
+				}
+			}
+			return i;
+		}
+
+		bool test_once(){
+			auto test_x_index = uniform_rand(0, test_size_ - 1);
+			layers[0]->input_ = test_x_[test_x_index];
+			for (auto layer : layers){
+				layer->forward();
+				if (layer->next != nullptr){
+					layer->next->input_ = layer->output_;
+				}
+			}
+			return (int)test_y_[test_x_index] == (int)max_iter(layers.back()->output_);
+		}
+
 		float_t train_once(){
 			float_t err = 0;
 			int iter = 0;
@@ -74,6 +104,7 @@ namespace convnet{
 				/*
 				back propgation
 				*/
+				
 				for (auto i = layers.rbegin(); i != layers.rend(); i++){
 					(*i)->back_prop();
 				}

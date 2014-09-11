@@ -20,13 +20,16 @@ namespace convnet{
 				err += 0.5 * (exp_y_vec[i] - input_[i]) *
 					(exp_y_vec[i] - input_[i]);
 			}
+			output_ = input_;
 		}
 
 		void back_prop(){
 			/* compute err terms of output layers */
 			g_.clear();
+			
 			for (size_t i = 0; i < in_depth_; i++){
 				g_.push_back((exp_y_vec[i] - input_[i]) * df_sigmod(input_[i]));
+				
 			}
 		}
 

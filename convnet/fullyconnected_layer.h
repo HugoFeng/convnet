@@ -30,7 +30,6 @@ namespace convnet{
 			for (size_t in = 0; in < in_depth_; in++){
 				g_[in] = df_sigmod(input_[in]) * dot(this->next->g_, get_W_step(in));
 			}
-
 			/*
 			Update weights.
 			*/
@@ -40,7 +39,6 @@ namespace convnet{
 							* input_[in] * this->next->g_[out]/*err terms*/
 							 /*+ lambda_ weight decay*/;
 				}
-				//disp_vec_t(W_);
 				b_[out] += this->next->g_[out];
 			}
 		}
@@ -51,17 +49,17 @@ namespace convnet{
 		see also:http://deeplearning.net/tutorial/references.html#xavier10
 		*/
 		void init_weight(){
-
+			/*
 			uniform_rand(W_.begin(), W_.end(),
 				-4 * 6 / std::sqrtf((float)(fan_in() + fan_out())),
 				4 * 6 / std::sqrtf((float)(fan_in() + fan_out())));
 			uniform_rand(b_.begin(), b_.end(),
 				-4 * 6 / std::sqrtf((float)(fan_in() + fan_out())),
 				4 * 6 / std::sqrtf((float)(fan_in() + fan_out())));
-			/*
+			*/
 			uniform_rand(W_.begin(), W_.end(), -2, 2);
 			uniform_rand(b_.begin(), b_.end(), -2, 2);
-			*/
+			
 		}
 	private:
 		vec_t get_W(size_t index){
