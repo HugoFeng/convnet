@@ -10,7 +10,7 @@ namespace convnet{
 	{
 	public:
 		MaxpoolingLayer(size_t in_width, size_t in_height, size_t in_depth) :
-			Layer(in_width, in_height, in_depth, in_width / 2, in_height / 2, in_depth)
+			Layer(in_width, in_height, in_depth, in_width / 2, in_height / 2, in_depth, 0, 0)
 		{
 			output_.resize(out_depth_ * out_width_ * out_height_);
 		}
@@ -42,7 +42,7 @@ namespace convnet{
 
 		void init_weight(){}
 
-	private:
+	//private:
 		inline float_t max_In_(size_t in_index, size_t h_, size_t w_, size_t out_index){
 			float_t max_pixel = 0;
 			size_t tmp;

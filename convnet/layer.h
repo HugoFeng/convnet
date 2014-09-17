@@ -6,9 +6,10 @@ namespace convnet{
 	{
 	public:
 		Layer(size_t in_width, size_t in_height, size_t in_depth,
-			size_t out_width, size_t out_height, size_t out_depth) :
+			size_t out_width, size_t out_height, size_t out_depth, float_t alpha, float_t lambda) :
 			in_width_(in_width), in_height_(in_height), in_depth_(in_depth),
-			out_width_(out_width), out_height_(out_height), out_depth_(out_depth)
+			out_width_(out_width), out_height_(out_height), out_depth_(out_depth),
+			alpha_(alpha), lambda_(lambda)
 		{}
 
 		virtual void init_weight() = 0;
@@ -42,14 +43,15 @@ namespace convnet{
 		vec_t W_;
 		vec_t b_;
 
+		vec_t deltaW_;
+
 		vec_t input_;
 		vec_t output_;
 
 		Layer* next;
-		Layer* prev;
 
 		float_t alpha_; // learning rate
-		float_t lambda_; // wight decay
+		float_t lambda_; // momentum
 		vec_t g_; // err terms
 
 		/*output*/

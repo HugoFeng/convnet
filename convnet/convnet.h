@@ -11,7 +11,7 @@
 namespace convnet{
 #define MAX_ITER 100000
 #define M 10
-#define END_CONDITION 1e-10
+#define END_CONDITION 1e-3
 	class ConvNet
 	{
 	public:

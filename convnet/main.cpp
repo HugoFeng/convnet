@@ -3,6 +3,7 @@ using namespace std;
 using namespace convnet;
 
 int main(){
+	
 	Mnist_Parser m;
 	m.load_testing();
 	//m.load_training();
@@ -15,17 +16,14 @@ int main(){
 	x.push_back(m.train_sample[i]->image);
 	y.push_back(m.train_sample[i]->label);
 	}
+	
 	*/
-
 
 	for (size_t i = 0; i < 10000; i++){
 		test_x.push_back(m.test_sample[i]->image);
 		test_y.push_back(m.test_sample[i]->label);
 	}
-	/*
-	vec2d_t x = { { 0, 0 }, { 0, 1 }, { 1, 0 }, { 1, 1 } };
-	vec_t y = { 0, 1, 1, 0 };
-	*/
+	
 	ConvNet n;
 
 	n.add_layer(new ConvolutionalLayer(32, 32, 1, 5, 6));

@@ -8,7 +8,7 @@ namespace convnet{
 	{
 	public:
 		OutputLayer(size_t in_depth):
-			Layer(1, 1, in_depth, 0, 0, 0)
+			Layer(1, 1, in_depth, 0, 0, 0, 0, 0)
 		{}
 
 		void forward(){

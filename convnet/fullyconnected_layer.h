@@ -7,10 +7,11 @@ namespace convnet{
 	{
 	public:
 		FullyConnectedLayer(size_t in_depth, size_t out_depth):
-			Layer(1, 1, in_depth, 1, 1, out_depth)
+			Layer(1, 1, in_depth, 1, 1, out_depth, 0.3, 0.01)
 		{
 			output_.resize(out_depth_);
 			W_.resize(in_depth_ * out_depth_);
+			deltaW_.resize(in_depth_ * out_depth_);
 			b_.resize(out_depth_);
 			g_.resize(in_depth_);
 
@@ -35,11 +36,14 @@ namespace convnet{
 			*/
 			for (size_t out = 0; out < out_depth_; out++){
 				for (size_t in = 0; in < in_depth_; in++){
-						W_[out * in_depth_ + in] += alpha_/*learning rate*/
-							* input_[in] * this->next->g_[out]/*err terms*/
-							 /*+ lambda_ weight decay*/;
+					auto delta = alpha_/*learning rate*/
+						* input_[in] * this->next->g_[out]/*err terms*/
+						/*+ lambda_ weight decay*/
+						+ lambda_ * deltaW_[out * in_depth_ + in];
+					W_[out * in_depth_ + in] += delta;
+					deltaW_[out * in_depth_ + in] = delta;
 				}
-				b_[out] += this->next->g_[out];
+				b_[out] += alpha_ * this->next->g_[out];
 			}
 		}
 
