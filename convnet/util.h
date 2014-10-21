@@ -1,6 +1,6 @@
 #include <vector>
 #include <cstdint>
-#include "boost\random.hpp"
+#include "boost/random.hpp"
 
 #pragma once
 namespace convnet {

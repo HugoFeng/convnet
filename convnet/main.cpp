@@ -4,7 +4,8 @@ using namespace convnet;
 
 int main(){
 	
-	Mnist_Parser m;
+    string data_path = "/Users/fenghugo/code/data/mnist/";
+	Mnist_Parser m(data_path);
 	m.load_testing();
 	//m.load_training();
 	vec2d_t x;
