@@ -13,11 +13,11 @@ namespace convnet {
 	class Mnist_Parser
 	{
 	public:
-		Mnist_Parser() :
-			test_img_fname("t10k-images.idx3-ubyte"),
-			test_lbl_fname("t10k-labels.idx1-ubyte"),
-			train_img_fname("train-images.idx3-ubyte"),
-			train_lbl_fname("train-labels.idx1-ubyte"){}
+		Mnist_Parser(std::string data_path) :
+			test_img_fname(data_path + "t10k-images-idx3-ubyte"),
+			test_lbl_fname(data_path + "t10k-labels-idx1-ubyte"),
+			train_img_fname(data_path + "train-images-idx3-ubyte"),
+			train_lbl_fname(data_path + "train-labels-idx1-ubyte"){}
 
 		std::vector<Sample*> load_testing(){
 			test_sample = load(test_img_fname, test_lbl_fname);
@@ -48,7 +48,7 @@ namespace convnet {
 
 	private:
 		std::vector<Sample*> load(std::string fimage, std::string flabel){
-			std::fstream in;
+			std::ifstream in;
 			in.open(fimage, std::ios::binary | std::ios::in);
 			if (!in.is_open()){
 				std::cout << "file opened failed." << std::endl;
@@ -103,7 +103,7 @@ namespace convnet {
 			assert(images.size() == swapEndien_32(number));
 
 			//label
-			in.open(flabel, std::ios::binary || std::ios::in);
+			in.open(flabel, std::ios::binary | std::ios::in);
 			if (!in.is_open()){
 				std::cout << "failed opened label file";
 			}
