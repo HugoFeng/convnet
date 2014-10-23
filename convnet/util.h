@@ -5,7 +5,7 @@
 #pragma once
 namespace convnet {
 	typedef std::vector<float_t> vec_t;
-	typedef std::vector<std::vector<float_t>> vec2d_t;
+	typedef std::vector<std::vector<float_t> > vec2d_t;
 
 	inline int uniform_rand(int min, int max) {
 		static boost::mt19937 gen(0);

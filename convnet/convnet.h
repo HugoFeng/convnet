@@ -48,7 +48,7 @@ namespace convnet{
 				iter++;
 				if(test_once()) bang ++;
 			}
-			std::cout << (float)bang / test_size_ << std::endl;
+			std::cout << "bang/test_size_: "<< (float)bang / test_size_ << std::endl;
 		}
 
 		void add_layer(Layer* layer){
