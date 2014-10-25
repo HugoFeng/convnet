@@ -24,8 +24,8 @@ namespace convnet{
 		}
 
 		void forward(){
-			for (size_t out = 0; out < out_depth_; out++){
-				for (size_t in = 0; in < in_depth_; in++){
+			for (size_t out = 0; out < out_depth_; out++){  /* for each output feature map */
+				for (size_t in = 0; in < in_depth_; in++){  /* for each input feature map */
 					for (size_t h_ = 0; h_ < out_height_; h_++){
 						for (size_t w_ = 0; w_ < out_width_; w_++){
 							output_[getOutIndex(out, h_, w_)] +=
@@ -33,6 +33,7 @@ namespace convnet{
 						}
 					}
 				}
+                /* use activate function to get output */
 				for (size_t h_ = 0; h_ < out_height_; h_++){
 					for (size_t w_ = 0; w_ < out_width_; w_++){
 						output_[getOutIndex(out, h_, w_)] =
@@ -59,9 +60,9 @@ namespace convnet{
 										out_height_ + h_ * out_width_ + w_] * 
 										/*weight*/
 										W_[in * out_depth_ * kernel_size_ * kernel_size_ +
-										out * kernel_size_ * kernel_size_ +
-										kernel_size_ * (kernel_size_ - y_ - 1) +
-										(kernel_size_ - 1 - x_)] * 
+                                           out * kernel_size_ * kernel_size_ +
+                                           kernel_size_ * (kernel_size_ - y_ - 1) +
+                                           (kernel_size_ - 1 - x_)] *
 										/*df of input*/
 										df_sigmod(input_[ff]);
 								}
@@ -85,19 +86,20 @@ namespace convnet{
 										kernel_size_ * (kernel_size_ - y_ - 1) +
 										(kernel_size_ - 1 - x_);
 									/*cal delta*/
-									auto delta = /*learning rate*/
+									auto delta =
+                                        /*learning rate*/
 										alpha_ *
 										/*input*/
 										input_[in * in_width_ * in_height_ + (h_ + y_) *
-										in_width_ + (x_ + w_)] *
+                                               in_width_ + (x_ + w_)] *
 										/*next layer err terms*/
 										this->next->g_[tt]
 										/*weight momentum*/
 										+ lambda_ * deltaW_[target];
 										
-										W_[target] += delta;
-										/*update momentum*/
-										deltaW_[target] = delta;
+                                    W_[target] += delta;
+                                    /*update momentum*/
+                                    deltaW_[target] = delta;
 								}
 							}
 							b_[tt] += alpha_ * this->next->g_[tt];
