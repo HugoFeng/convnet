@@ -120,7 +120,7 @@ namespace convnet {
 			while (!in.eof())
 			{
 				in.read((char*)&label, sizeof(uint8_t));
-				std::cout << (int)label << std::endl;
+				//std::cout << (int)label << std::endl;
 				labels.push_back(label);
 			}
 
@@ -129,7 +129,7 @@ namespace convnet {
 				samples.push_back(new Sample(labels[i], images[i]->extend()));
 			}
 
-			std::cout << "complete" << std::endl;
+			std::cout << "Loading complete" << std::endl;
 			in.close();
 			return samples;
 		}
