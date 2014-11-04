@@ -69,6 +69,11 @@ namespace convnet{
             		}
             	}
             }
+            std::cout << "Press enter to check output of the Conv Layer: " << std::endl;
+            getchar();
+            for (int i = 0; i<out_depth_*out_height_*out_width_; i++)
+                printf("output: %f \n", output_[i]);
+            std::cout << "Checking finished" << std::endl;
         }
 
         void forward_parallel(){
@@ -109,6 +114,11 @@ namespace convnet{
             //float* test = new float[out_width_*out_height_*out_depth_];
             queue.enqueueReadBuffer(output_buf, CL_TRUE, 0, out_width_*out_height_*out_depth_*sizeof(cl_float), &output_[0]);
 
+            std::cout << "Press enter to check output of the Conv Layer: " << std::endl;
+            getchar();
+            for (int i = 0; i<out_depth_*out_height_*out_width_; i++)
+                printf("output: %f \n", output_[i]);
+            std::cout << "Checking finished" << std::endl;
 
         }
         catch (cl::Error& e) {
