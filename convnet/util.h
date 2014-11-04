@@ -2,6 +2,9 @@
 #include <cstdint>
 #include "boost/random.hpp"
 
+#define DEBUG
+//#define GPU
+
 #pragma once
 namespace convnet {
 	typedef std::vector<float_t> vec_t;

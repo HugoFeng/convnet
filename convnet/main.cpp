@@ -1,10 +1,23 @@
 #include "convnet.h"
+
+
+
+#include <exception>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <cstdlib>
+#include <vector>
+
+#include <JC/util.hpp>
+
+
 using namespace std;
 using namespace convnet;
 
 int main(){
-	
-    string data_path = "/Users/fenghugo/code/data/mnist/";
+    //string data_path = "/Users/fenghugo/code/data/mnist/";
+	string data_path = "E:\\code\\data\\mnist\\";
 	Mnist_Parser m(data_path);
 	m.load_testing();
 	//m.load_training();
@@ -34,8 +47,15 @@ int main(){
 	n.add_layer(new ConvolutionalLayer(5, 5, 16, 5, 100));
 	n.add_layer(new FullyConnectedLayer(100, 10));
 
+#ifdef GPU
+    cout << "Using GPU:" << endl;
+#else
+    cout << "Using CPU:" << endl;
+#endif
+
 	n.train(test_x, test_y, 10000);
-	//n.test(test_x, test_y);
-	getchar();
+    cout << "testing" << endl;
+	n.test(test_x, test_y, 1000);
+	//getchar();
 	return 0;
 }

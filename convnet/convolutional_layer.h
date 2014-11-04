@@ -2,6 +2,8 @@
 #include "util.h"
 #include "layer.h"
 
+#include <JC/util.hpp>
+
 namespace convnet{
 	class ConvolutionalLayer :public Layer
 	{
@@ -16,32 +18,113 @@ namespace convnet{
 			b_.resize(out_depth * out_width_* out_height_);
 			output_.resize(out_depth * out_width_ * out_height_);
 			this->init_weight();
+            this->init_opencl();
 		}
 
 		void init_weight(){
 			uniform_rand(W_.begin(), W_.end(), -1, 1);
 			uniform_rand(b_.begin(), b_.end(), -1, 1);
 		}
+       
+        cl::Context context;
+        cl::CommandQueue queue;
+        cl::Program program;
+
+        void init_opencl(){
+            // OpenCL initialization  
+            std::vector<cl::Platform> platforms;
+            std::vector<cl::Device> devices;
+            cl::Platform::get(&platforms);
+            platforms[0].getDevices(CL_DEVICE_TYPE_GPU, &devices);
+            context = cl::Context(devices);
+            queue = cl::CommandQueue(context, devices[0], CL_QUEUE_PROFILING_ENABLE);
+
+            program = jc::buildProgram("E:\\code\\cpp\\convnet\\convnet\\kernels.ocl", context, devices);
+        }
 
 		void forward(){
-			for (size_t out = 0; out < out_depth_; out++){  /* for each output feature map */
-				for (size_t in = 0; in < in_depth_; in++){  /* for each input feature map */
-					for (size_t h_ = 0; h_ < out_height_; h_++){
-						for (size_t w_ = 0; w_ < out_width_; w_++){
-							output_[getOutIndex(out, h_, w_)] +=
-								conv(getInforKernel(in, h_, w_), getW_(in, out));
-						}
-					}
-				}
-                /* use activate function to get output */
-				for (size_t h_ = 0; h_ < out_height_; h_++){
-					for (size_t w_ = 0; w_ < out_width_; w_++){
-						output_[getOutIndex(out, h_, w_)] =
-							sigmod(output_[getOutIndex(out, h_, w_)] + /*eh?*/ b_[getb_(out, h_, w_)]);
-					}
-				}
-			}
+#ifdef GPU
+            forward_parallel();
+#else
+            forward_cpu();
+#endif
+
 		}
+
+        void forward_cpu(){                  
+            for (size_t out = 0; out < out_depth_; out++){  /* for each output feature map */
+            	for (size_t in = 0; in < in_depth_; in++){  /* for each input feature map */
+            		for (size_t h_ = 0; h_ < out_height_; h_++){
+            			for (size_t w_ = 0; w_ < out_width_; w_++){
+            				output_[getOutIndex(out, h_, w_)] +=
+            					conv(getInforKernel(in, h_, w_), getW_(in, out));
+            			}
+            		}
+            	}
+                         /* use activate function to get output */
+            	for (size_t h_ = 0; h_ < out_height_; h_++){
+            		for (size_t w_ = 0; w_ < out_width_; w_++){
+            			output_[getOutIndex(out, h_, w_)] =
+            				sigmod(output_[getOutIndex(out, h_, w_)] + /*eh?*/ b_[getb_(out, h_, w_)]);
+            		}
+            	}
+            }
+        }
+
+        void forward_parallel(){
+            
+            try {
+            // Allocate memory on the device
+            cl::Buffer input_buf(context, CL_MEM_READ_ONLY, in_width_*in_height_*in_depth_*sizeof(cl_float));
+            cl::Buffer weight_buf(context, CL_MEM_READ_ONLY, kernel_size_*kernel_size_*in_depth_*out_depth_*sizeof(cl_float));
+            cl::Buffer b_buf(context, CL_MEM_READ_ONLY, out_depth_ * out_width_* out_height_*sizeof(cl_float));
+            cl::Buffer output_buf(context, CL_MEM_WRITE_ONLY, out_width_*out_height_*out_depth_*sizeof(cl_float));
+            
+
+            std::string kernel_name = "forward_parallel";
+            cl::Kernel kernel(program, kernel_name.c_str());
+            kernel.setArg<cl::Memory>(0, input_buf);
+            kernel.setArg<cl::Memory>(1, weight_buf);
+            kernel.setArg<cl::Memory>(2, b_buf);
+            kernel.setArg<cl::Memory>(3, output_buf);
+            kernel.setArg<int>(4, in_width_);
+            kernel.setArg<int>(5, in_height_);
+            kernel.setArg<int>(6, in_depth_);
+            kernel.setArg<int>(7, out_width_);
+            kernel.setArg<int>(8, out_height_);
+            kernel.setArg<int>(9, out_depth_);
+            kernel.setArg<int>(10, kernel_size_);
+
+            // transfer source data from the host to the device
+            queue.enqueueWriteBuffer(input_buf, CL_TRUE, 0, in_width_*in_height_*in_depth_*sizeof(cl_float), &input_[0]);
+            queue.enqueueWriteBuffer(weight_buf, CL_TRUE, 0, kernel_size_*kernel_size_*in_depth_*out_depth_*sizeof(cl_float), &W_[0]);
+            queue.enqueueWriteBuffer(b_buf, CL_TRUE, 0, out_depth_ * out_width_* out_height_*sizeof(cl_float), &b_[0]);
+
+            // execute the code on the device
+            cl::NDRange global(out_depth_*kernel_size_, kernel_size_);
+            cl::NDRange local(kernel_size_, kernel_size_);
+            cl_ulong t = jc::runAndTimeKernel(kernel, queue, global, local);
+
+            // transfer destination data from the device to the host
+            //float* test = new float[out_width_*out_height_*out_depth_];
+            queue.enqueueReadBuffer(output_buf, CL_TRUE, 0, out_width_*out_height_*out_depth_*sizeof(cl_float), &output_[0]);
+
+
+        }
+        catch (cl::Error& e) {
+            std::cerr << e.what() << ": " << jc::readable_status(e.err());
+            //return 3;
+        }
+        catch (std::exception& e) {
+            std::cerr << e.what() << std::endl;
+            //return 2;
+        }
+        catch (...) {
+            std::cerr << "Unexpected error. Aborting!\n" << std::endl;
+            //return 1;
+        }
+
+        }
 
 		void back_prop(){
 			g_.clear();

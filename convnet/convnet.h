@@ -9,10 +9,10 @@
 #include "fullyconnected_layer.h"
 
 namespace convnet{
-#ifdef DEBUG
+#ifndef DEBUG
     #define MAX_ITER 100000
 #else
-    #define MAX_ITER 10
+    #define MAX_ITER 200
 #endif
 #define M 10
 #define END_CONDITION 1e-3
@@ -39,7 +39,7 @@ namespace convnet{
 			while (iter < MAX_ITER && !stop){
 				iter++;
 				auto err = train_once();
-				std::cout << err << std::endl;
+				std::cout << "err: " << err << std::endl;
 				if (err < END_CONDITION) stop = true;
 			}
 		}
