@@ -27,10 +27,10 @@ __kernel void forward_parallel(
         float weight_buf_sub[25]; // Set by brute force, NEED to be changed
         float input_buf_sub[25]; // Set by brute force, NEED to be changed
         // load input for this sub area
-        for (unsigned int x = 0; x < kernel_size; x++){
-            for (unsigned int y = 0; y < kernel_size; y++){
+        for (unsigned int y = 0; y < kernel_size; y++){
+            for (unsigned int x = 0; x < kernel_size; x++){
                 input_buf_sub[y*kernel_size + x] = input_buf[in * (in_width * in_height) + (h_index + y) * in_width + x + w_index];
-                weight_buf_sub[y*kernel_size + x] = weight_buf[in * out_depth * size + out * size + x + y];
+                weight_buf_sub[y*kernel_size + x] = weight_buf[in * out_depth * size + out * size + y*kernel_size + x ];
             }
         }
         
