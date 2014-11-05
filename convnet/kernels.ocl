@@ -30,7 +30,7 @@ __kernel void forward_parallel(
         for (unsigned int x = 0; x < kernel_size; x++){
             for (unsigned int y = 0; y < kernel_size; y++){
                 input_buf_sub[y*kernel_size + x] = input_buf[in * (in_width * in_height) + (h_index + y) * in_width + x + w_index];
-                weight_buf_sub[x+y] = weight_buf[in * out_depth * size + out * size + x + y];
+                weight_buf_sub[y*kernel_size + x] = weight_buf[in * out_depth * size + out * size + x + y];
             }
         }
         
@@ -41,6 +41,7 @@ __kernel void forward_parallel(
     } 
 
     unsigned int out_index = out*out_width*out_height + h_index*out_height + w_index;
-    unsigned int b_index   = out*out_width*out_height + h_index*out_height + w_index;
+    unsigned int b_index   = out_index;
     output_buf[out_index] = sigmod(sum + b_buf[b_index]);
+    // output_buf[out_index] = out*100 + h_index* 10 + w_index; 
 }
