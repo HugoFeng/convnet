@@ -16,9 +16,13 @@ __kernel void forward_parallel(
     int out_depth,
     int kernel_size) {
 
-    int out = get_group_id(0);
-    int h_index = get_local_id(1);
-    int w_index = get_local_id(0);
+    if(get_global_id(0)>out_depth*out_width) return;
+    if(get_global_id(1)>out_height) return;
+
+    int out = get_global_id(0) / out_width;
+    int w_index = get_global_id(0) % out_width;
+    int h_index = get_global_id(1);
+    
 
     float sum = 0;
     int size = kernel_size*kernel_size;
@@ -26,7 +30,7 @@ __kernel void forward_parallel(
     for (unsigned int in=0; in < in_depth; in++) {
         float weight_buf_sub[25]; // Set by brute force, NEED to be changed
         float input_buf_sub[25]; // Set by brute force, NEED to be changed
-        // load input for this sub area
+        // load input and weight for this sub area
         for (unsigned int y = 0; y < kernel_size; y++){
             for (unsigned int x = 0; x < kernel_size; x++){
                 input_buf_sub[y*kernel_size + x] = input_buf[in * (in_width * in_height) + (h_index + y) * in_width + x + w_index];
@@ -43,5 +47,4 @@ __kernel void forward_parallel(
     unsigned int out_index = out*out_width*out_height + h_index*out_height + w_index;
     unsigned int b_index   = out_index;
     output_buf[out_index] = sigmod(sum + b_buf[b_index]);
-    // output_buf[out_index] = out*100 + h_index* 10 + w_index; 
 }

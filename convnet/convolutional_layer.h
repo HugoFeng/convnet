@@ -64,8 +64,8 @@ namespace convnet{
                          /* use activate function to get output */
             	for (size_t h_ = 0; h_ < out_height_; h_++){
             		for (size_t w_ = 0; w_ < out_width_; w_++){
-            			output_[getOutIndex(out, h_, w_)] =
-            				sigmod(output_[getOutIndex(out, h_, w_)] + /*eh?*/ b_[getb_(out, h_, w_)]);
+                        output_[getOutIndex(out, h_, w_)] =
+                            sigmod(output_[getOutIndex(out, h_, w_)] + /*eh?*/ b_[getb_(out, h_, w_)]);
             		}
             	}
             }
@@ -106,13 +106,13 @@ namespace convnet{
             queue.enqueueWriteBuffer(b_buf, CL_TRUE, 0, out_depth_ * out_width_* out_height_*sizeof(cl_float), &b_[0]);
 
             // execute the code on the device
-            cl::NDRange global(out_depth_*out_width_, out_height_);
-            cl::NDRange local(out_width_, out_height_);
+            int grpWidth = 20;
+            cl::NDRange global(jc::closestMultiple(out_depth_*out_width_, grpWidth), 
+                               jc::closestMultiple(out_height_, grpWidth));
+            cl::NDRange local(grpWidth, grpWidth);
             cl_ulong t = jc::runAndTimeKernel(kernel, queue, global, local);
 
             // transfer destination data from the device to the host
-            //float* test = new float[out_width_*out_height_*out_depth_];
-            // queue.enqueueReadBuffer(output_buf, CL_TRUE, 0, out_width_*out_height_*out_depth_*sizeof(cl_float), test);
             queue.enqueueReadBuffer(output_buf, CL_TRUE, 0, out_width_*out_height_*out_depth_*sizeof(cl_float), &output_[0]);
 
             std::cout << "Press enter to check output of the Conv Layer: " << std::endl;
@@ -210,8 +210,8 @@ namespace convnet{
 
 		inline vec_t getInforKernel(size_t in, size_t h_, size_t w_){
 			vec_t r;
-			for (size_t x = 0; x < kernel_size_; x++){
-				for (size_t y = 0; y < kernel_size_; y++){
+			for (size_t y = 0; y < kernel_size_; y++){
+				for (size_t x = 0; x < kernel_size_; x++){
 					r.push_back(input_[in * (in_width_ * in_height_) + (h_ + y) * in_width_ + x + w_]);
 				}
 			}
