@@ -106,8 +106,10 @@ namespace convnet{
             queue.enqueueWriteBuffer(b_buf, CL_TRUE, 0, out_depth_ * out_width_* out_height_*sizeof(cl_float), &b_[0]);
 
             // execute the code on the device
-            cl::NDRange global(out_depth_*out_width_, out_height_);
-            cl::NDRange local(out_width_, out_height_);
+            int grpWidth = 20;
+            cl::NDRange global(jc::closestMultiple(out_depth_*out_width_, grpWidth), 
+                               jc::closestMultiple(out_height_, grpWidth));
+            cl::NDRange local(grpWidth, grpWidth);
             cl_ulong t = jc::runAndTimeKernel(kernel, queue, global, local);
 
             // transfer destination data from the device to the host
