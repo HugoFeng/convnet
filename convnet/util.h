@@ -3,7 +3,7 @@
 #include "boost/random.hpp"
 
 #define DEBUG
-//#define GPU
+#define GPU
 
 #pragma once
 namespace convnet {
