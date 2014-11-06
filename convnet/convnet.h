@@ -91,8 +91,9 @@ namespace convnet{
 			float_t err = 0;
 			int iter = 0;
 			while (iter < M){
+                auto train_x_index = iter % train_size_;
 				iter++;
-				auto train_x_index = uniform_rand(0, train_size_ - 1);
+				//auto train_x_index = uniform_rand(0, train_size_ - 1);
 				layers[0]->input_ = train_x_[train_x_index];
 				layers.back()->exp_y = (int)train_y_[train_x_index];
 				/*
