@@ -51,13 +51,22 @@ namespace convnet{
 			int iter = 0;
 			int bang = 0;
 
+#ifdef GPU
             std::cout << "Testing with batch size of " << batch_size << std::endl;
+#else
+            std::cout << "Testing with CPU " << std::endl;
+#endif
 			while (iter < test_size_/batch_size){
 				iter++;
                 int result = 0;
                 if (batch_size > 1){
+#ifdef GPU
                     result = test_once_batch(batch_size);
                     printf(" Running batch #%d, %d in %d is correct\n", iter+1, result, batch_size);
+#else
+                    std::cout << "Cannot run batch operations with CPU! Abording.." << std::endl;
+                    return;
+#endif
                 }
                 else
                     if(test_once()) result=1;
