@@ -69,11 +69,6 @@ namespace convnet{
             		}
             	}
             }
-            std::cout << "Press enter to check output of the Conv Layer: " << std::endl;
-            getchar();
-            for (int i = 0; i<out_depth_*out_height_*out_width_; i++)
-                printf("output: %f \n", output_[i]);
-            std::cout << "Checking finished" << std::endl;
         }
 
         void forward_parallel(){
@@ -114,13 +109,6 @@ namespace convnet{
 
             // transfer destination data from the device to the host
             queue.enqueueReadBuffer(output_buf, CL_TRUE, 0, out_width_*out_height_*out_depth_*sizeof(cl_float), &output_[0]);
-
-            std::cout << "Press enter to check output of the Conv Layer: " << std::endl;
-            getchar();
-            for (int i = 0; i<out_depth_*out_height_*out_width_; i++)
-                printf("output: %f \n", output_[i]);
-            std::cout << "Checking finished" << std::endl;
-
         }
         catch (cl::Error& e) {
             std::cerr << e.what() << ": " << jc::readable_status(e.err());
@@ -134,6 +122,63 @@ namespace convnet{
             std::cerr << "Unexpected error. Aborting!\n" << std::endl;
             //return 1;
         }
+
+        }
+
+        void forward_batch(int batch_size){
+
+            try {
+                // Allocate memory on the device
+                cl::Buffer input_batch_buf(context, CL_MEM_READ_ONLY, batch_size*in_width_*in_height_*in_depth_*sizeof(cl_float));
+                cl::Buffer weight_buf(context, CL_MEM_READ_ONLY, kernel_size_*kernel_size_*in_depth_*out_depth_*sizeof(cl_float));
+                cl::Buffer b_buf(context, CL_MEM_READ_ONLY, out_depth_ * out_width_* out_height_*sizeof(cl_float));
+                cl::Buffer output_batch_buf(context, CL_MEM_WRITE_ONLY, batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float));
+
+
+                std::string kernel_name = "forward_batch";
+                cl::Kernel kernel(program, kernel_name.c_str());
+                kernel.setArg<cl::Memory>(0, input_batch_buf);
+                kernel.setArg<cl::Memory>(1, weight_buf);
+                kernel.setArg<cl::Memory>(2, b_buf);
+                kernel.setArg<cl::Memory>(3, output_batch_buf);
+                kernel.setArg<int>(4, in_width_);
+                kernel.setArg<int>(5, in_height_);
+                kernel.setArg<int>(6, in_depth_);
+                kernel.setArg<int>(7, out_width_);
+                kernel.setArg<int>(8, out_height_);
+                kernel.setArg<int>(9, out_depth_);
+                kernel.setArg<int>(10, kernel_size_);
+                kernel.setArg<int>(11, batch_size);
+
+                // transfer source data from the host to the device
+                queue.enqueueWriteBuffer(input_batch_buf, CL_TRUE, 0, batch_size*in_width_*in_height_*in_depth_*sizeof(cl_float), &input_batch_[0]);
+                queue.enqueueWriteBuffer(weight_buf, CL_TRUE, 0, kernel_size_*kernel_size_*in_depth_*out_depth_*sizeof(cl_float), &W_[0]);
+                queue.enqueueWriteBuffer(b_buf, CL_TRUE, 0, out_depth_ * out_width_* out_height_*sizeof(cl_float), &b_[0]);
+
+                // execute the code on the device
+                int grpWidth = 20;
+                cl::NDRange global(jc::closestMultiple(out_depth_*out_width_, grpWidth),
+                    jc::closestMultiple(batch_size*out_height_, grpWidth));
+                cl::NDRange local(grpWidth, grpWidth);
+                cl_ulong t = jc::runAndTimeKernel(kernel, queue, global, local);
+
+                output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);
+                // transfer destination data from the device to the host
+                queue.enqueueReadBuffer(output_batch_buf, CL_TRUE, 0, batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float), &output_batch_[0]);
+
+            }
+            catch (cl::Error& e) {
+                std::cerr << e.what() << ": " << jc::readable_status(e.err());
+                //return 3;
+            }
+            catch (std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                //return 2;
+            }
+            catch (...) {
+                std::cerr << "Unexpected error. Aborting!\n" << std::endl;
+                //return 1;
+            }
 
         }
 

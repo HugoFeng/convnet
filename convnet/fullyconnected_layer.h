@@ -24,6 +24,15 @@ namespace convnet{
 			}
 		}
 
+        void forward_batch(int batch_size){
+            output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);
+            for (size_t batch = 0; batch < batch_size; batch++){
+                for (size_t out = 0; out < out_depth_; out++){
+                    output_batch_[batch*out_depth_ + out] = sigmod(dot_per_batch(batch, input_batch_, get_W(out)) + b_[out]);
+                }
+            }
+        }
+
 		void back_prop(){
 			/*
 			Compute the err terms;

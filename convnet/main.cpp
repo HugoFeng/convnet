@@ -54,8 +54,9 @@ int main(){
 #endif
 
 	n.train(test_x, test_y, 10000);
-    cout << "testing" << endl;
-	n.test(test_x, test_y, 1000);
+    int test_sample_count = 100;
+    printf("Testing with %d samples:\n", test_sample_count);
+    n.test(test_x, test_y, test_sample_count, 10);
 	//getchar();
 	return 0;
 }
