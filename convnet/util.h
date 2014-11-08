@@ -52,6 +52,15 @@ namespace convnet {
 		return sum;
 	}
 
+    float_t dot_per_batch(int batch, vec_t x, vec_t w){
+        size_t x_width = w.size();
+        float_t sum = 0;
+        for (size_t i = 0; i < x_width; i++){
+            sum += x[batch*x_width + i] * w[i];
+        }
+        return sum;
+    }
+
 	struct Image {
 		std::vector< std::vector<std::float_t> > img;// a image is represented by a 2-dimension vector  
 		size_t size; // width or height

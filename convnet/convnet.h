@@ -12,7 +12,7 @@ namespace convnet{
 #ifndef DEBUG
     #define MAX_ITER 100000
 #else
-    #define MAX_ITER 200
+    #define MAX_ITER 2
 #endif
 #define M 10
 #define END_CONDITION 1e-3
@@ -44,16 +44,31 @@ namespace convnet{
 			}
 		}
 
-		void test(vec2d_t test_x, vec_t test_y, size_t test_size){
+		void test(vec2d_t test_x, vec_t test_y, size_t test_size, int batch_size){
+            assert(batch_size > 0);
+            assert(test_size % batch_size == 0);
 			test_x_ = test_x, test_y_ = test_y, test_size_ = test_size;
 			int iter = 0;
 			int bang = 0;
-			while (iter < test_size_){
+
+            std::cout << "Testing with batch size of " << batch_size << std::endl;
+			while (iter < test_size_/batch_size){
 				iter++;
-				if(test_once()) bang ++;
+                int result = 0;
+                if (batch_size > 1){
+                    result = test_once_batch(batch_size);
+                    printf(" Running batch #%d, %d in %d is correct\n", iter+1, result, batch_size);
+                }
+                else
+                    if(test_once()) result=1;
+                bang += result;
 			}
 			std::cout << "bang/test_size_: "<< (float)bang / test_size_ << std::endl;
 		}
+
+        void test(vec2d_t test_x, vec_t test_y, size_t test_size){
+            test(test_x, test_y, test_size , 1);
+        }
 
 		void add_layer(Layer* layer){
 			if (!layers.empty())
@@ -75,6 +90,18 @@ namespace convnet{
 			return i;
 		}
 
+        size_t max_iter(float v[], size_t size){
+            size_t i = 0;
+            float_t max = v[0];
+            for (size_t j = 1; j < size; j++){
+                if (v[j] > max){
+                    max = v[j];
+                    i = j;
+                }
+            }
+            return i;
+        }
+
 		bool test_once(){
 			auto test_x_index = uniform_rand(0, test_size_ - 1);
 			layers[0]->input_ = test_x_[test_x_index];
@@ -86,6 +113,28 @@ namespace convnet{
 			}
 			return (int)test_y_[test_x_index] == (int)max_iter(layers.back()->output_);
 		}
+
+        int test_once_batch(int batch_size){
+            auto test_x_index = uniform_rand(0, test_size_ - batch_size);
+            layers.back()->exp_y_batch.resize(batch_size);
+            // concatenate input vectors into one vector
+            for (int b = 0; b < batch_size; b++){
+                layers[0]->input_batch_.insert(layers[0]->input_batch_.end(), test_x_[test_x_index + b].begin(), test_x_[test_x_index + b].end());
+                layers.back()->exp_y_batch[b] = test_y_[test_x_index + b];
+            }
+            
+            for (auto layer : layers){
+                layer->forward_batch(batch_size);
+                if (layer->next != nullptr){
+                    layer->next->input_batch_ = layer->output_batch_;
+                }
+            }
+            int count = 0;
+            for (int batch = 0; batch < batch_size; batch++)
+                if ((int)test_y_[test_x_index + batch] == (int)max_iter(&(layers.back()->output_batch_[batch]), batch_size))
+                    count++;
+            return count;
+        }
 
 		float_t train_once(){
 			float_t err = 0;

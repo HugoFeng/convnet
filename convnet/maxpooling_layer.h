@@ -25,6 +25,19 @@ namespace convnet{
 				}
 			}
 		}
+
+        void forward_batch(int batch_size){
+            output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);
+            for (size_t batch = 0; batch < batch_size; batch++){
+                for (size_t out = 0; out < out_depth_; out++){
+                    for (size_t h_ = 0; h_ < in_height_; h_ += 2){
+                        for (size_t w_ = 0; w_ < in_width_; w_ += 2){
+                            output_batch_[getOutIndex_batch(batch, out, h_, w_)] = max_In_batch_(batch, out, h_, w_);
+                        }
+                    }
+                }
+            }
+        }
 		/*
 		 In forward propagation, k¡Ák blocks are reduced to a single value. 
 		 Then, this single value acquires an error computed from backwards 
@@ -59,10 +72,30 @@ namespace convnet{
 			return max_pixel;
 		}
 
+        inline float_t max_In_batch_(size_t batch, size_t in_index, size_t h_, size_t w_){
+            float_t max_pixel = 0;
+            size_t tmp;
+            for (size_t x = 0; x < 2; x++){
+                for (size_t y = 0; y < 2; y++){
+                    tmp = (batch*in_depth_*in_width_*in_height_) + (in_index * in_width_ * in_height_) +
+                        ((h_ + y) * in_width_) + (w_ + x);
+                    if (max_pixel < input_batch_[tmp]){
+                        max_pixel = input_batch_[tmp];
+                    }
+                }
+            }
+            return max_pixel;
+        }
+
 		inline size_t getOutIndex(size_t out, size_t h_, size_t w_){
 			return out * out_width_ * out_height_ +
 				h_ / 2 * out_width_ + (w_ / 2);
 		}
+
+        inline size_t getOutIndex_batch(size_t batch, size_t out, size_t h_, size_t w_){
+            return batch*out_depth_*out_width_*out_height_ + out * out_width_ * out_height_ +
+                h_ / 2 * out_width_ + (w_ / 2);
+        }
 
 		/*
 		for each output, I store the connection index of the input,
