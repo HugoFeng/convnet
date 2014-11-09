@@ -62,7 +62,7 @@ namespace convnet{
                 if (batch_size > 1){
 #ifdef GPU
                     result = test_once_batch(batch_size);
-                    printf(" Running batch #%d, %d in %d is correct\n", iter+1, result, batch_size);
+                    //printf(" Running batch #%d, %d in %d is correct\n", iter+1, result, batch_size);
 #else
                     std::cout << "Cannot run batch operations with CPU! Abording.." << std::endl;
                     return;
