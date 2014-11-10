@@ -39,7 +39,7 @@ namespace convnet{
             context = cl::Context(devices);
             queue = cl::CommandQueue(context, devices[0], CL_QUEUE_PROFILING_ENABLE);
 
-            program = jc::buildProgram("E:\\code\\cpp\\convnet\\convnet\\kernels.ocl", context, devices);
+            program = jc::buildProgram(KERNEL_PATH, context, devices);
         }
 
 		void forward(){

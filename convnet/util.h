@@ -4,6 +4,8 @@
 
 #define DEBUG
 #define GPU
+#define KERNEL_PATH "E:\\code\\cpp\\convnet\\convnet\\kernels.ocl"
+#define DATA_PATH "E:\\code\\data\\mnist\\"   // must end with a slash, because the path will be concatenated with a file name
 
 #pragma once
 namespace convnet {

@@ -16,9 +16,7 @@ using namespace std;
 using namespace convnet;
 
 int main(){
-    //string data_path = "/Users/fenghugo/code/data/mnist/";
-	string data_path = "E:\\code\\data\\mnist\\";
-	Mnist_Parser m(data_path);
+	Mnist_Parser m(DATA_PATH);
 	m.load_testing();
 	//m.load_training();
 	vec2d_t x;
@@ -57,6 +55,5 @@ int main(){
     int test_sample_count = 100;
     printf("Testing with %d samples:\n", test_sample_count);
     n.test(test_x, test_y, test_sample_count, 10);
-	//getchar();
 	return 0;
 }
