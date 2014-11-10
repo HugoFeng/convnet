@@ -125,7 +125,7 @@ namespace convnet{
 
         }
 
-        void forward_batch(int batch_size){
+        void forward_batch_wrapped(int batch_size){
 
             try {
                 // Allocate memory on the device
@@ -180,6 +180,18 @@ namespace convnet{
                 //return 1;
             }
 
+        }
+
+        void forward_batch(int batch_size){
+            int iteration = 100;
+            printf(" **** In ConvolutionalLayer::forward_batch ****\n");
+            printf("    Batch size: %d\n    INPUT depth: %d, height: %d, width: %d\n    OUTPUT depth: %d, height: %d, width: %d\n",
+                batch_size, in_depth_, in_height_, in_width_, out_depth_, out_height_, out_width_);
+            printf("    ==Running with>>> %d <<<Iterations==\n", iteration);
+            const clock_t begin_time = clock();
+            for (int i = 0; i < iteration;i++)
+                forward_batch_wrapped(batch_size);
+            std::cout << "    Time consumed for each iteration: " << float(clock() - begin_time) / (CLOCKS_PER_SEC / 1000) / iteration<< " ms" << std::endl;
         }
 
 		void back_prop(){
