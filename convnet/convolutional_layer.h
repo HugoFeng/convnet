@@ -205,8 +205,8 @@ namespace convnet{
             std::cout << "    Time consumed for each iteration: " << each_lasts * 1000 << " ms" << std::endl;
             float cpI = float(operations) / (input_data_size + output_data_size);
             float throughPut = (input_data_size + output_data_size) / each_lasts / 1e9; // GB/s
-            printf("    Input Buffer size: %fMB, Output Buffer size: %fMB\n", input_data_size/1e6, output_data_size/1e6);
-            printf("    CI: %f, ThoughPut: %fGB/s, GFLOPS: %f\n", cpI, throughPut, cpI*throughPut);
+            printf("    Input Buffer size: %.2f MB, Output Buffer size: %.2f MB\n", input_data_size/1e6, output_data_size/1e6);
+            printf("    CI: %.2f, ThoughPut: %.2f GB/s, GFLOPS: %.2f\n", cpI, throughPut, cpI*throughPut);
         }
 
 		void back_prop(){
