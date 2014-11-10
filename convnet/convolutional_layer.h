@@ -125,7 +125,7 @@ namespace convnet{
 
         }
 
-        void forward_batch_wrapped(int batch_size){
+        void forward_batch_wrapped(int batch_size, int grpWidth){
 
             try {
                 // Allocate memory on the device
@@ -156,7 +156,6 @@ namespace convnet{
                 queue.enqueueWriteBuffer(b_buf, CL_TRUE, 0, out_depth_ * out_width_* out_height_*sizeof(cl_float), &b_[0]);
 
                 // execute the code on the device
-                int grpWidth = 20;
                 cl::NDRange global(jc::closestMultiple(out_depth_*out_width_, grpWidth),
                     jc::closestMultiple(batch_size*out_height_, grpWidth));
                 cl::NDRange local(grpWidth, grpWidth);
@@ -184,14 +183,30 @@ namespace convnet{
 
         void forward_batch(int batch_size){
             int iteration = 100;
+            int grpWidth = 20;
+            int globalWidth = jc::closestMultiple(out_depth_*out_width_, grpWidth);
+            int globalHeight = jc::closestMultiple(batch_size*out_height_, grpWidth);
+            int input_data_size = (batch_size*in_width_*in_height_*in_depth_
+                                    + kernel_size_*kernel_size_*in_depth_*out_depth_
+                                    + out_depth_ * out_width_* out_height_ )*sizeof(cl_float);
+            int output_data_size = batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float);
+
+            int operations = 22 + 26 * in_depth_*kernel_size_*kernel_size_;
             printf(" **** In ConvolutionalLayer::forward_batch ****\n");
             printf("    Batch size: %d\n    INPUT depth: %d, height: %d, width: %d\n    OUTPUT depth: %d, height: %d, width: %d\n",
                 batch_size, in_depth_, in_height_, in_width_, out_depth_, out_height_, out_width_);
             printf("    ==Running with>>> %d <<<Iterations==\n", iteration);
+
             const clock_t begin_time = clock();
             for (int i = 0; i < iteration;i++)
-                forward_batch_wrapped(batch_size);
-            std::cout << "    Time consumed for each iteration: " << float(clock() - begin_time) / (CLOCKS_PER_SEC / 1000) / iteration<< " ms" << std::endl;
+                forward_batch_wrapped(batch_size, grpWidth);
+            const float all_time = float(clock() - begin_time);
+            const float each_lasts = all_time / CLOCKS_PER_SEC / iteration; // seconds
+            std::cout << "    Time consumed for each iteration: " << each_lasts * 1000 << " ms" << std::endl;
+            float cpI = float(operations) / (input_data_size + output_data_size);
+            float throughPut = (input_data_size + output_data_size) / each_lasts / 1e9; // GB/s
+            printf("    Input Buffer size: %fMB, Output Buffer size: %fMB\n", input_data_size/1e6, output_data_size/1e6);
+            printf("    CI: %f, ThoughPut: %fGB/s, GFLOPS: %f\n", cpI, throughPut, cpI*throughPut);
         }
 
 		void back_prop(){
