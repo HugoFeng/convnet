@@ -62,7 +62,7 @@ namespace convnet{
                 if (batch_size > 1){
 #ifdef GPU
                     result = test_once_batch(batch_size);
-                    //printf(" Running batch #%d, %d in %d is correct\n", iter+1, result, batch_size);
+                    printf(" Running batch #%d, %d in %d is correct\n", iter, result, batch_size);
 #else
                     std::cout << "Cannot run batch operations with CPU! Abording.." << std::endl;
                     return;
@@ -138,6 +138,8 @@ namespace convnet{
                     layer->next->input_batch_ = layer->output_batch_;
                 }
             }
+
+            // collect batch results
             int count = 0;
             for (int batch = 0; batch < batch_size; batch++)
                 if ((int)test_y_[test_x_index + batch] == (int)max_iter(&(layers.back()->output_batch_[batch]), batch_size))
