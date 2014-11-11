@@ -190,7 +190,7 @@ namespace convnet{
                                     + kernel_size_*kernel_size_*in_depth_*out_depth_
                                     + out_depth_ * out_width_* out_height_ )*sizeof(cl_float);
             int output_data_size = batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float);
-
+            int memory_access_per_thread = (in_depth_ * 2 * kernel_size_*kernel_size_ + 1 + 1)*sizeof(float);
             int operations = 22 + 26 * in_depth_*kernel_size_*kernel_size_;
             printf(" **** In ConvolutionalLayer::forward_batch ****\n");
             printf("    Batch size: %d\n    INPUT depth: %d, height: %d, width: %d\n    OUTPUT depth: %d, height: %d, width: %d\n",
@@ -203,7 +203,7 @@ namespace convnet{
             const float all_time = float(clock() - begin_time);
             const float each_lasts = all_time / CLOCKS_PER_SEC / iteration; // seconds
             std::cout << "    Time consumed for each iteration: " << each_lasts * 1000 << " ms" << std::endl;
-            float cpI = float(operations) / (input_data_size + output_data_size);
+            float cpI = float(operations) / memory_access_per_thread;
             float throughPut = (input_data_size + output_data_size) / each_lasts / 1e9; // GB/s
             printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size/1e6, output_data_size/1e6);
             printf("    CI: %.2g, ThoughPut: %.2g GB/s, GFLOPS: %.2g\n", cpI, throughPut, cpI*throughPut);
