@@ -43,12 +43,7 @@ namespace convnet{
         }
 
 		void forward(){
-#ifdef GPU
-            forward_parallel();
-#else
             forward_cpu();
-#endif
-
 		}
 
         void forward_cpu(){                  
@@ -71,6 +66,7 @@ namespace convnet{
             }
         }
 
+        // This method is deprecated, Use "forward_batch" instead
         void forward_parallel(){
             
             try {

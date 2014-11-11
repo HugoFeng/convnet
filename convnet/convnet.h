@@ -56,20 +56,24 @@ namespace convnet{
 #else
             std::cout << "Testing with CPU " << std::endl;
 #endif
-			while (iter < test_size_/batch_size){
-				iter++;
+            while (iter < test_size_ / batch_size){
+                iter++;
                 int result = 0;
-                if (batch_size > 1){
-#ifdef GPU
-                    result = test_once_batch(batch_size);
-                    printf(" Running batch #%d, %d in %d is correct\n", iter+1, result, batch_size);
-#else
+
+#ifdef GPU // Use GPU
+                result = test_once_batch(batch_size);
+                printf(" Running batch #%d, %d in %d is correct\n", iter + 1, result, batch_size);
+    #ifdef CHECK_RESULT     // Check result of batch operations
+                bool check = check_batch_result(batch_size);
+    #endif
+#else   // Use CPU
+                if (batch_size == 1)
+                    result=test_once()?1:0;
+                else{
                     std::cout << "Cannot run batch operations with CPU! Abording.." << std::endl;
                     return;
-#endif
                 }
-                else
-                    if(test_once()) result=1;
+#endif    
                 bang += result;
 			}
 			std::cout << "bang/test_size_: "<< (float)bang / test_size_ << std::endl;
@@ -143,6 +147,13 @@ namespace convnet{
                 if ((int)test_y_[test_x_index + batch] == (int)max_iter(&(layers.back()->output_batch_[batch]), batch_size))
                     count++;
             return count;
+        }
+
+        bool check_batch_result(int batch_size) {
+            for (int batch = 0; batch < batch_size; batch++){
+
+            }
+            return true;
         }
 
 		float_t train_once(){
