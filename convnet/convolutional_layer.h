@@ -67,8 +67,7 @@ namespace convnet{
             }
         }
 
-        // This method is deprecated, Use "forward_batch" instead
-        void forward_parallel(){
+        void forward_gpu(){
             
             try {
             // Allocate memory on the device

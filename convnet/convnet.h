@@ -66,7 +66,7 @@ namespace convnet{
     #ifdef CHECK_RESULT     // Check result of batch operations
                 bool check = check_batch_result(batch_size);
                 if (check)
-                    printf("  \\__ Results of this batch is verified.\n");
+                    printf("  \\__ Results verified.\n");
     #endif
 #else   // Use CPU
                 if (batch_size == 1)
@@ -121,7 +121,7 @@ namespace convnet{
 			auto test_x_index = uniform_rand(0, test_size_ - 1);
 			layers[0]->input_ = test_x_[test_x_index];
 			for (auto layer : layers){
-				layer->forward();
+				layer->forward_cpu();
 				if (layer->next != nullptr){
 					layer->next->input_ = layer->output_;
 				}
@@ -159,7 +159,7 @@ namespace convnet{
                                          layers[0]->input_batch_.begin() + (batch + 1)*each_input_size);
                 layers[0]->input_ = this_input;
                 for (auto layer : layers){
-                    layer->forward();
+                    layer->forward_cpu();
                     if (layer->next != nullptr){
                         layer->next->input_ = layer->output_;
                     }
@@ -183,16 +183,20 @@ namespace convnet{
 			float_t err = 0;
 			int iter = 0;
 			while (iter < M){
-                auto train_x_index = iter % train_size_;
+                //auto train_x_index = iter % train_size_;
 				iter++;
-				//auto train_x_index = uniform_rand(0, train_size_ - 1);
+				auto train_x_index = uniform_rand(0, train_size_ - 1);
 				layers[0]->input_ = train_x_[train_x_index];
 				layers.back()->exp_y = (int)train_y_[train_x_index];
 				/*
 				Start forward feeding.
 				*/
 				for (auto layer : layers){
-					layer->forward();
+#ifdef GPU
+                    layer->forward_gpu();
+#else
+					layer->forward_cpu();
+#endif
 					if (layer->next != nullptr){
 						layer->next->input_ = layer->output_;
 					}

@@ -13,9 +13,11 @@ namespace convnet{
 		{}
 
 		virtual void init_weight() = 0;
-		virtual void forward() = 0;
+		virtual void forward_cpu() = 0;
         virtual void forward_batch(int batch_size) = 0;
 		virtual void back_prop() = 0;
+
+        void forward_gpu(){ forward_cpu(); }
 
 		float_t sigmod(float_t in){
 			return 1.0 / (1.0 + std::exp(-in));

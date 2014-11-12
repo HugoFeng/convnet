@@ -15,7 +15,7 @@ namespace convnet{
 			output_.resize(out_depth_ * out_width_ * out_height_);
 		}
 
-		void forward(){
+		void forward_cpu(){
 			for (size_t out = 0; out < out_depth_; out++){
 				for (size_t h_ = 0; h_ < in_height_; h_+= 2){
 					for (size_t w_ = 0; w_ < in_width_; w_+= 2){
