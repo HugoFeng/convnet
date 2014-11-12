@@ -43,15 +43,11 @@ namespace convnet{
         }
 
 		void forward(){
-#ifdef GPU
-            forward_parallel();
-#else
             forward_cpu();
-#endif
-
 		}
 
-        void forward_cpu(){                  
+        void forward_cpu(){  
+            std::fill(output_.begin(), output_.end(), 0);
             for (size_t out = 0; out < out_depth_; out++){  /* for each output feature map */
             	for (size_t in = 0; in < in_depth_; in++){  /* for each input feature map */
             		for (size_t h_ = 0; h_ < out_height_; h_++){
@@ -71,6 +67,7 @@ namespace convnet{
             }
         }
 
+        // This method is deprecated, Use "forward_batch" instead
         void forward_parallel(){
             
             try {

@@ -52,7 +52,7 @@ int main(){
 #endif
 
 	n.train(test_x, test_y, 10000);
-    int test_sample_count = 100;
+    int test_sample_count = 20;
     printf("Testing with %d samples:\n", test_sample_count);
     n.test(test_x, test_y, test_sample_count, 10);
 	return 0;
