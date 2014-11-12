@@ -66,7 +66,7 @@ namespace convnet{
     #ifdef CHECK_RESULT     // Check result of batch operations
                 bool check = check_batch_result(batch_size);
                 if (check)
-                    printf(" \\__ Results of Batch #%d verified.\n", iter);
+                    printf("  \\__ Results of this batch is verified.\n");
     #endif
 #else   // Use CPU
                 if (batch_size == 1)
@@ -169,7 +169,7 @@ namespace convnet{
                 int out_depth = layers.back()->in_depth_;
                 for (int out = 0; out < out_depth; out++){
                     //printf("     Checking result of batch #%d out #%d...\n", batch, out);
-                    if (this_output[out] != output_batch[out + batch*out_depth]){
+                    if (abs(this_output[out]-output_batch[out + batch*out_depth])>1e-3){
                         printf("   !!==Wrong output. Sample: #%d, Out: #%d, should be: %f, batch result: %f\n",
                             batch, out, this_output[out], output_batch[out + batch*out_depth]);
                         all_correct = false;
