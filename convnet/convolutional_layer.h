@@ -184,10 +184,12 @@ namespace convnet{
                 const float each_lasts = all_time / CLOCKS_PER_SEC / iteration; // seconds
                 std::cout << "    Time consumed for each iteration: " << each_lasts * 1000 << " ms" << std::endl;
                 float cpI = float(operations) / memory_access_per_thread;
+                float peak_bandwidth = 25.6; // Memory Bandwidth: 25.6 GB/s
                 //float throughPut = (input_data_size + output_data_size) / each_lasts / 1e9; // GB/s
                 float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / each_lasts / 1e9; // GB/s
+               
                 printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size / 1e6, output_data_size / 1e6);
-                printf("    CI: %.2g, ThoughPut: %.2g GB/s, GFLOPS: %.2g\n", cpI, throughPut, cpI*throughPut);
+                printf("    CI: %.2g, ThoughPut: %.2g GB/s, GFLOPS: %.2g\n", cpI, throughPut, cpI*peak_bandwidth);
 
                 output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);
                 // transfer destination data from the device to the host
