@@ -9,11 +9,7 @@
 #include "fullyconnected_layer.h"
 
 namespace convnet{
-#ifndef DEBUG
-    #define MAX_ITER 100000
-#else
-    #define MAX_ITER 2
-#endif
+#define MAX_ITER 2
 #define M 10
 #define END_CONDITION 1e-3
 	class ConvNet

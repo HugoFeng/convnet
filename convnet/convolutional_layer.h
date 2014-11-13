@@ -170,9 +170,10 @@ namespace convnet{
                 cl::NDRange global(globalWidth, globalHeight);
                 cl::NDRange local(grpWidth, grpWidth);
 
-
-                int iteration = 100;
-                
+#ifndef PROFILING
+                jc::runAndTimeKernel(kernel, queue, global, local);
+#else
+                int iteration = 100;                
                 int input_data_size = (batch_size*in_width_*in_height_*in_depth_
                     + kernel_size_*kernel_size_*in_depth_*out_depth_
                     + out_depth_ * out_width_* out_height_)*sizeof(cl_float);
@@ -209,7 +210,7 @@ namespace convnet{
 #endif
                 printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size / 1e6, output_data_size / 1e6);
                 printf("    CI: %.2g, ThoughPut: %.2g GB/s, GFLOPS: %.2g\n", cpI, throughPut, cpI*peak_bandwidth);
-
+#endif
                 output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);
                 // transfer destination data from the device to the host
                 queue.enqueueReadBuffer(output_batch_buf, CL_TRUE, 0, batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float), &output_batch_[0]);
