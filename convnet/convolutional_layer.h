@@ -209,7 +209,7 @@ namespace convnet{
                 float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / each_lasts / 1e9; // GB/s
 #endif
                 printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size / 1e6, output_data_size / 1e6);
-                printf("    CI: %.2g, ThoughPut: %.2g GB/s, GFLOPS: %.2g\n", cpI, throughPut, cpI*peak_bandwidth);
+                printf("    CI: %.2g, ThoughPut: %.2g GB/s, CI*ThoughPut= %.2g GFLOPS, CI*Bandwidth= %.2g GFLOPS\n", cpI, throughPut, cpI*throughPut, cpI*peak_bandwidth);
 #endif
                 output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);
                 // transfer destination data from the device to the host

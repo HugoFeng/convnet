@@ -11,7 +11,7 @@
 #include "boost/random.hpp"
 
 #define GPU
-//#define PROFILING
+#define PROFILING
 #define BATCH_MORE
 //#define CHECK_RESULT
 #define KERNEL_PATH "E:/code/cpp/convnet/convnet/kernels.ocl"
