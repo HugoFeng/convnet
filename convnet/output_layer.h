@@ -11,7 +11,7 @@ namespace convnet{
 			Layer(1, 1, in_depth, 0, 0, 0, 0, 0)
 		{}
 
-		void forward(){
+		void forward_cpu(){
 			this->err = 0;
 			exp_y_vec.clear();
 			exp_y_vec.resize(in_depth_);

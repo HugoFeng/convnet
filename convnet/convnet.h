@@ -56,20 +56,26 @@ namespace convnet{
 #else
             std::cout << "Testing with CPU " << std::endl;
 #endif
-			while (iter < test_size_/batch_size){
-				iter++;
+            while (iter < test_size_ / batch_size){
+                iter++;
                 int result = 0;
-                if (batch_size > 1){
-#ifdef GPU
-                    result = test_once_batch(batch_size);
-                    printf(" Running batch #%d, %d in %d is correct\n", iter, result, batch_size);
-#else
+
+#ifdef GPU // Use GPU
+                result = test_once_batch(batch_size);
+                printf(" Running batch #%d, %d in %d is correct\n", iter, result, batch_size);
+    #ifdef CHECK_RESULT     // Check result of batch operations
+                bool check = check_batch_result(batch_size);
+                if (check)
+                    printf("  \\__ Results verified.\n");
+    #endif
+#else   // Use CPU
+                if (batch_size == 1)
+                    result=test_once()?1:0;
+                else{
                     std::cout << "Cannot run batch operations with CPU! Abording.." << std::endl;
                     return;
-#endif
                 }
-                else
-                    if(test_once()) result=1;
+#endif    
                 bang += result;
 			}
 			std::cout << "bang/test_size_: "<< (float)bang / test_size_ << std::endl;
@@ -115,7 +121,7 @@ namespace convnet{
 			auto test_x_index = uniform_rand(0, test_size_ - 1);
 			layers[0]->input_ = test_x_[test_x_index];
 			for (auto layer : layers){
-				layer->forward();
+				layer->forward_cpu();
 				if (layer->next != nullptr){
 					layer->next->input_ = layer->output_;
 				}
@@ -147,20 +153,52 @@ namespace convnet{
             return count;
         }
 
+        bool check_batch_result(int batch_size) {
+            bool all_correct = true;
+            for (int batch = 0; batch < batch_size; batch++){
+                int each_input_size = layers[0]->in_height_ * layers[0]->in_width_;
+                vec_t this_input = vec_t(layers[0]->input_batch_.begin() + batch*each_input_size, 
+                                         layers[0]->input_batch_.begin() + (batch + 1)*each_input_size);
+                layers[0]->input_ = this_input;
+                for (auto layer : layers){
+                    layer->forward_cpu();
+                    if (layer->next != nullptr){
+                        layer->next->input_ = layer->output_;
+                    }
+                }
+                vec_t output_batch = layers.back()->output_batch_;
+                vec_t this_output = layers.back()->output_;
+                int out_depth = layers.back()->in_depth_;
+                for (int out = 0; out < out_depth; out++){
+                    //printf("     Checking result of batch #%d out #%d...\n", batch, out);
+                    if (abs(this_output[out]-output_batch[out + batch*out_depth])>1e-3){
+                        printf("   !!==Wrong output. Sample: #%d, Out: #%d, should be: %f, batch result: %f\n",
+                            batch, out, this_output[out], output_batch[out + batch*out_depth]);
+                        all_correct = false;
+                    }
+                }
+            }
+            return all_correct;
+        }
+
 		float_t train_once(){
 			float_t err = 0;
 			int iter = 0;
 			while (iter < M){
-                auto train_x_index = iter % train_size_;
+                //auto train_x_index = iter % train_size_;
 				iter++;
-				//auto train_x_index = uniform_rand(0, train_size_ - 1);
+				auto train_x_index = uniform_rand(0, train_size_ - 1);
 				layers[0]->input_ = train_x_[train_x_index];
 				layers.back()->exp_y = (int)train_y_[train_x_index];
 				/*
 				Start forward feeding.
 				*/
 				for (auto layer : layers){
-					layer->forward();
+#ifdef GPU
+                    layer->forward_gpu();
+#else
+					layer->forward_cpu();
+#endif
 					if (layer->next != nullptr){
 						layer->next->input_ = layer->output_;
 					}

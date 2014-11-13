@@ -39,19 +39,15 @@ namespace convnet{
             context = cl::Context(devices);
             queue = cl::CommandQueue(context, devices[0], CL_QUEUE_PROFILING_ENABLE);
 
-            program = jc::buildProgram("E:\\code\\cpp\\convnet\\convnet\\kernels.ocl", context, devices);
+            program = jc::buildProgram(KERNEL_PATH, context, devices);
         }
 
 		void forward(){
-#ifdef GPU
-            forward_parallel();
-#else
             forward_cpu();
-#endif
-
 		}
 
-        void forward_cpu(){                  
+        void forward_cpu(){  
+            std::fill(output_.begin(), output_.end(), 0);
             for (size_t out = 0; out < out_depth_; out++){  /* for each output feature map */
             	for (size_t in = 0; in < in_depth_; in++){  /* for each input feature map */
             		for (size_t h_ = 0; h_ < out_height_; h_++){
@@ -71,7 +67,7 @@ namespace convnet{
             }
         }
 
-        void forward_parallel(){
+        void forward_gpu(){
             
             try {
             // Allocate memory on the device
@@ -134,8 +130,12 @@ namespace convnet{
                 cl::Buffer b_buf(context, CL_MEM_READ_ONLY, out_depth_ * out_width_* out_height_*sizeof(cl_float));
                 cl::Buffer output_batch_buf(context, CL_MEM_WRITE_ONLY, batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float));
 
-
+#ifdef BATCH_MORE
+                std::string kernel_name = "forward_batch_more";
+                int thread_width = 4;
+#else
                 std::string kernel_name = "forward_batch";
+#endif
                 cl::Kernel kernel(program, kernel_name.c_str());
                 kernel.setArg<cl::Memory>(0, input_batch_buf);
                 kernel.setArg<cl::Memory>(1, weight_buf);
@@ -149,6 +149,9 @@ namespace convnet{
                 kernel.setArg<int>(9, out_depth_);
                 kernel.setArg<int>(10, kernel_size_);
                 kernel.setArg<int>(11, batch_size);
+#ifdef BATCH_MORE
+                kernel.setArg<int>(12, thread_width);
+#endif
 
                 // transfer source data from the host to the device
                 queue.enqueueWriteBuffer(input_batch_buf, CL_TRUE, 0, batch_size*in_width_*in_height_*in_depth_*sizeof(cl_float), &input_batch_[0]);
@@ -157,23 +160,37 @@ namespace convnet{
 
                 // execute the code on the device
                 int grpWidth = 20;
-                cl::NDRange global(jc::closestMultiple(out_depth_*out_width_, grpWidth),
-                    jc::closestMultiple(batch_size*out_height_, grpWidth));
+#ifdef BATCH_MORE
+                int globalWidth = jc::closestMultiple(out_depth_*out_width_/thread_width, grpWidth);
+                int globalHeight = jc::closestMultiple(batch_size*out_height_, grpWidth);
+#else
+                int globalWidth = jc::closestMultiple(out_depth_*out_width_, grpWidth);
+                int globalHeight = jc::closestMultiple(batch_size*out_height_, grpWidth);
+#endif
+                cl::NDRange global(globalWidth, globalHeight);
                 cl::NDRange local(grpWidth, grpWidth);
 
 
                 int iteration = 100;
-                int globalWidth = jc::closestMultiple(out_depth_*out_width_, grpWidth);
-                int globalHeight = jc::closestMultiple(batch_size*out_height_, grpWidth);
+                
                 int input_data_size = (batch_size*in_width_*in_height_*in_depth_
                     + kernel_size_*kernel_size_*in_depth_*out_depth_
                     + out_depth_ * out_width_* out_height_)*sizeof(cl_float);
                 int output_data_size = batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float);
+                printf(" **** In ConvolutionalLayer::forward_batch ****\n");
+#ifdef BATCH_MORE
+                int memory_access_per_thread = thread_width*(in_depth_ * 2 * kernel_size_*kernel_size_ + 1 + 1)*sizeof(float);
+                int operations = 3 + thread_width * (26 * in_depth_*kernel_size_*kernel_size_ + 27);
+                printf("    Batch size: %d, Tasks of each thread: %d\n    INPUT depth: %d, height: %d, width: %d\n    OUTPUT depth: %d, height: %d, width: %d\n",
+                    batch_size, thread_width, in_depth_, in_height_, in_width_, out_depth_, out_height_, out_width_);
+#else
                 int memory_access_per_thread = (in_depth_ * 2 * kernel_size_*kernel_size_ + 1 + 1)*sizeof(float);
                 int operations = 22 + 26 * in_depth_*kernel_size_*kernel_size_;
-                printf(" **** In ConvolutionalLayer::forward_batch ****\n");
                 printf("    Batch size: %d\n    INPUT depth: %d, height: %d, width: %d\n    OUTPUT depth: %d, height: %d, width: %d\n",
                     batch_size, in_depth_, in_height_, in_width_, out_depth_, out_height_, out_width_);
+#endif
+                
+                
                 printf("    ==Running with>>> %d <<<Iterations==\n", iteration);
 
                 const clock_t begin_time = clock();
@@ -185,9 +202,11 @@ namespace convnet{
                 std::cout << "    Time consumed for each iteration: " << each_lasts * 1000 << " ms" << std::endl;
                 float cpI = float(operations) / memory_access_per_thread;
                 float peak_bandwidth = 25.6; // Memory Bandwidth: 25.6 GB/s
-                //float throughPut = (input_data_size + output_data_size) / each_lasts / 1e9; // GB/s
+#ifdef BATCH_MORE
+                float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / thread_width / each_lasts / 1e9; // GB/s
+#else
                 float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / each_lasts / 1e9; // GB/s
-               
+#endif
                 printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size / 1e6, output_data_size / 1e6);
                 printf("    CI: %.2g, ThoughPut: %.2g GB/s, GFLOPS: %.2g\n", cpI, throughPut, cpI*peak_bandwidth);
 

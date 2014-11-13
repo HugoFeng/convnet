@@ -18,7 +18,7 @@ namespace convnet{
 			this->init_weight();
 		}
 		
-		void forward(){
+		void forward_cpu(){
 			for (size_t out = 0; out < out_depth_; out++){
 				output_[out] = sigmod(dot(input_, get_W(out)) + b_[out]);
 			}
