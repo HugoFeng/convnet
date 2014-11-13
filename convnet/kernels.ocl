@@ -99,3 +99,60 @@ __kernel void forward_batch(
     unsigned int b_index   = out*out_width*out_height + h_index*out_height + w_index;
     output_batch_buf[out_index] = sigmod(sum + b_buf[b_index]);
 }
+
+__kernel void forward_batch_more(
+    __global float* input_batch_buf,
+    __global float* weight_buf,
+    __global float* b_buf,
+    __global float* output_batch_buf,
+    int in_width,
+    int in_height,
+    int in_depth,
+    int out_width,
+    int out_height,
+    int out_depth,
+    int kernel_size,
+    int batch_size,
+    int thread_width) {
+
+    
+
+    int batch = get_global_id(1) / out_height;
+    int h_index = get_global_id(1) % out_height;
+    
+
+    
+    int size = kernel_size*kernel_size;
+    for(int task=0; task<thread_width; task++){
+        if((get_global_id(0) * thread_width + task)>out_depth*out_width) return;
+        if(get_global_id(1)>out_height*batch_size) return;
+
+        int out = (get_global_id(0) * thread_width + task) / out_width;
+        int w_index = (get_global_id(0) * thread_width + task) % out_width;
+        float sum = 0;
+        for (unsigned int in=0; in < in_depth; in++) {
+            float weight_buf_sub[25]; // Set by brute force, NEED to be changed
+            float input_buf_sub[25]; // Set by brute force, NEED to be changed
+            // load input and weight for this sub area
+            for (unsigned int y = 0; y < kernel_size; y++){
+                for (unsigned int x = 0; x < kernel_size; x++){
+                    input_buf_sub[y*kernel_size + x] = input_batch_buf[batch*in_depth*in_width*in_height
+                                                                        + in * (in_width * in_height) 
+                                                                        + (h_index + y) * in_width + x + w_index];
+                    weight_buf_sub[y*kernel_size + x] = weight_buf[in * out_depth * size 
+                                                                        + out * size + y*kernel_size + x ];
+                }
+            }
+            
+            // compute the convolution
+            for (unsigned int i=0; i<size; i++) {
+                sum += input_buf_sub[i] * weight_buf_sub[size - i -1];
+            }
+        } 
+        unsigned int out_index = batch*out_depth*out_width*out_height + out*out_width*out_height + h_index*out_height + w_index;
+        unsigned int b_index   = out*out_width*out_height + h_index*out_height + w_index;
+        output_batch_buf[out_index] = sigmod(sum + b_buf[b_index]);
+    }
+
+    
+}

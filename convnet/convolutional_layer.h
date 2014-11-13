@@ -130,8 +130,12 @@ namespace convnet{
                 cl::Buffer b_buf(context, CL_MEM_READ_ONLY, out_depth_ * out_width_* out_height_*sizeof(cl_float));
                 cl::Buffer output_batch_buf(context, CL_MEM_WRITE_ONLY, batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float));
 
-
+#ifdef BATCH_MORE
+                std::string kernel_name = "forward_batch_more";
+                int thread_width = 4;
+#else
                 std::string kernel_name = "forward_batch";
+#endif
                 cl::Kernel kernel(program, kernel_name.c_str());
                 kernel.setArg<cl::Memory>(0, input_batch_buf);
                 kernel.setArg<cl::Memory>(1, weight_buf);
@@ -145,6 +149,9 @@ namespace convnet{
                 kernel.setArg<int>(9, out_depth_);
                 kernel.setArg<int>(10, kernel_size_);
                 kernel.setArg<int>(11, batch_size);
+#ifdef BATCH_MORE
+                kernel.setArg<int>(12, thread_width);
+#endif
 
                 // transfer source data from the host to the device
                 queue.enqueueWriteBuffer(input_batch_buf, CL_TRUE, 0, batch_size*in_width_*in_height_*in_depth_*sizeof(cl_float), &input_batch_[0]);
