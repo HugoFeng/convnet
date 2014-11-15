@@ -43,7 +43,7 @@ int main(){
 
 	n.train(test_x, test_y, 10000);
     int test_sample_count = 10;
-    Sleep(1000);
+    //Sleep(1000);
     printf("Testing with %d samples:\n", test_sample_count);
     const clock_t begin_time = clock();
     n.test(test_x, test_y, test_sample_count, 10);
