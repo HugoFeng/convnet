@@ -13,9 +13,9 @@
 #define GPU
 #define PROFILING
 #define BATCH_MORE
-//#define CHECK_RESULT
-#define KERNEL_PATH "E:/code/cpp/convnet/convnet/kernels.ocl"
-#define DATA_PATH "E:/code/data/mnist/"   // must end with a slash, because the path will be concatenated with a file name
+#define CHECK_RESULT
+#define KERNEL_PATH "/Users/fenghugo/code/opencl/convnet/convnet/kernels.ocl"
+#define DATA_PATH "/Users/fenghugo/code/data/mnist/"   // must end with a slash, because the path will be concatenated with a file name
 
 #pragma once
 namespace convnet {

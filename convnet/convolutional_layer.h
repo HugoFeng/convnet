@@ -2,7 +2,7 @@
 #include "util.h"
 #include "layer.h"
 
-#include <JC/util.hpp>
+#include "JC/util.hpp"
 
 namespace convnet{
 	class ConvolutionalLayer :public Layer
