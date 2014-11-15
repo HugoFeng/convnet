@@ -149,9 +149,7 @@ namespace convnet{
                 kernel.setArg<int>(9, out_depth_);
                 kernel.setArg<int>(10, kernel_size_);
                 kernel.setArg<int>(11, batch_size);
-#ifdef BATCH_MORE
-                kernel.setArg<int>(12, thread_width);
-#endif
+
 
                 // transfer source data from the host to the device
                 queue.enqueueWriteBuffer(input_batch_buf, CL_TRUE, 0, batch_size*in_width_*in_height_*in_depth_*sizeof(cl_float), &input_batch_[0]);
@@ -160,8 +158,13 @@ namespace convnet{
 
                 // execute the code on the device
                 int grpWidth = 20;
-                cl::NDRange global(jc::closestMultiple(out_depth_*out_width_, grpWidth),
-                    jc::closestMultiple(batch_size*out_height_, grpWidth));
+                int global_width = jc::closestMultiple(out_depth_*out_width_, grpWidth);
+#ifdef BATCH_MORE
+                int global_height = jc::closestMultiple((batch_size+thread_width-1)/thread_width*out_height_, grpWidth);
+#else
+                int global_height = jc::closestMultiple(batch_size*out_height_, grpWidth);
+#endif
+                cl::NDRange global(global_width, global_height);
                 cl::NDRange local(grpWidth, grpWidth);
                 cl_ulong t = jc::runAndTimeKernel(kernel, queue, global, local);
 
