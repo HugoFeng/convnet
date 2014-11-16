@@ -8,6 +8,7 @@
 #include <string>
 #include <cstdlib>
 #include <vector>
+#include "math.h"
 #include "boost/random.hpp"
 
 #define GPU
