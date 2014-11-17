@@ -11,12 +11,7 @@
 #include "math.h"
 #include "boost/random.hpp"
 
-#define GPU
-#define PROFILING
-#define BATCH_MORE
-#define CHECK_RESULT
-#define KERNEL_PATH "/Users/fenghugo/code/opencl/convnet/convnet/kernels.ocl"
-#define DATA_PATH "/Users/fenghugo/code/data/mnist/"   // must end with a slash, because the path will be concatenated with a file name
+#include "settings.h"
 
 #pragma once
 namespace convnet {
