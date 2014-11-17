@@ -3,6 +3,7 @@
 #include "boost/random.hpp"
 
 #include "settings.h"
+#pragma once
 namespace convnet {
 	typedef std::vector<float_t> vec_t;
 	typedef std::vector<std::vector<float_t> > vec2d_t;
