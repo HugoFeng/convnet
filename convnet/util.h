@@ -2,14 +2,7 @@
 #include <cstdint>
 #include "boost/random.hpp"
 
-#define DEBUG
-#define GPU
-#define BATCH_MORE
-#define CHECK_RESULT
-#define KERNEL_PATH "/Users/fenghugo/code/opencl/convnet/convnet/kernels.ocl"
-#define DATA_PATH "/Users/fenghugo/code/data/mnist/"   // must end with a slash, because the path will be concatenated with a file name
-
-#pragma once
+#include "settings.h"
 namespace convnet {
 	typedef std::vector<float_t> vec_t;
 	typedef std::vector<std::vector<float_t> > vec2d_t;
