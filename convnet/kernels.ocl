@@ -44,7 +44,7 @@ __kernel void forward_parallel(
         }
     } 
 
-    unsigned int out_index = out*out_width*out_height + h_index*out_height + w_index;
+    unsigned int out_index = out*out_width*out_height + h_index*out_width + w_index;
     unsigned int b_index   = out_index;
     output_buf[out_index] = sigmod(sum + b_buf[b_index]);
 }
@@ -95,8 +95,8 @@ __kernel void forward_batch(
         }
     } 
 
-    unsigned int out_index = batch*out_depth*out_width*out_height + out*out_width*out_height + h_index*out_height + w_index;
-    unsigned int b_index   = out*out_width*out_height + h_index*out_height + w_index;
+    unsigned int out_index = batch*out_depth*out_width*out_height + out*out_width*out_height + h_index*out_width + w_index;
+    unsigned int b_index   = out*out_width*out_height + h_index*out_width + w_index;
     output_batch_buf[out_index] = sigmod(sum + b_buf[b_index]);
 }
 
@@ -115,11 +115,14 @@ __kernel void forward_batch_more(
     int kernel_size,
     int batch_size) {
 
-    int task_start = get_global_id(1) / out_height * THREAD_TASKS;
-    int task_end = min(task_start+THREAD_TASKS, batch_size);
+    int task_start = get_global_id(1) / out_height * THREAD_TASKS; // included
+    int task_end = min(task_start+THREAD_TASKS, batch_size); // excluded
     int out = get_global_id(0) / out_width;
     int h_index = get_global_id(1) % out_height;
     int w_index = get_global_id(0) % out_width;
+
+    if(get_global_id(0)>out_depth*out_width) return;
+    if(get_global_id(1)>((batch_size+THREAD_TASKS-1)/THREAD_TASKS*out_height)) return;
       
     int size = kernel_size*kernel_size;
     float sum[THREAD_TASKS];
@@ -151,7 +154,7 @@ __kernel void forward_batch_more(
                                                                         + in * (in_width * in_height) 
                                                                         + (h_index + y) * in_width + x + w_index];
                     // compute the convolution
-                    sum[task%THREAD_TASKS] += input_buf_ele * weight_buf_sub[x*kernel_size + y]; // symmetrical
+                    sum[task%THREAD_TASKS] += input_buf_ele * weight_buf_sub[size-1 - y*kernel_size - x]; // symmetrical
                 }
             }
         }
@@ -159,8 +162,8 @@ __kernel void forward_batch_more(
 
     // write back the results for each task
     for (unsigned int task=task_start; task<task_end; task++) {
-        unsigned int out_index = task*out_depth*out_width*out_height + out*out_width*out_height + h_index*out_height + w_index;
-        unsigned int b_index   = out*out_width*out_height + h_index*out_height + w_index;
+        unsigned int out_index = task*out_depth*out_width*out_height + out*out_width*out_height + h_index*out_width + w_index;
+        unsigned int b_index   = out*out_width*out_height + h_index*out_width + w_index;
         output_batch_buf[out_index] = sigmod(sum[task%THREAD_TASKS] + b_buf[b_index]);
     }  
 }

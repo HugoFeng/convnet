@@ -132,7 +132,6 @@ namespace convnet{
 
 #ifdef BATCH_MORE
                 std::string kernel_name = "forward_batch_more";
-                int thread_width = 10;
 #else
                 std::string kernel_name = "forward_batch";
 #endif
@@ -161,7 +160,7 @@ namespace convnet{
 
                 int global_width = jc::closestMultiple(out_depth_*out_width_, grpWidth);
 #ifdef BATCH_MORE
-                int global_height = jc::closestMultiple((batch_size+thread_width-1)/thread_width*out_height_, grpWidth);
+                int global_height = jc::closestMultiple((batch_size+THREAD_TASKS-1)/THREAD_TASKS*out_height_, grpWidth);
 #else
                 int global_height = jc::closestMultiple(batch_size*out_height_, grpWidth);
 #endif
@@ -178,11 +177,11 @@ namespace convnet{
                 int output_data_size = batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float);
 #ifdef BATCH_MORE
                 printf(" **** In ConvolutionalLayer::forward_batch_more ****\n");
-                int memory_access_per_thread = (in_depth_*kernel_size_*kernel_size_*(1+thread_width) + thread_width)*sizeof(float);
+                int memory_access_per_thread = (in_depth_*kernel_size_*kernel_size_*(1+THREAD_TASKS) + THREAD_TASKS)*sizeof(float);
                 int operations = in_depth_*kernel_size_*kernel_size_*9
-                                    + in_depth_*thread_width*kernel_size_*kernel_size_*15 + thread_width*20;
+                                    + in_depth_*THREAD_TASKS*kernel_size_*kernel_size_*15 + THREAD_TASKS*20;
                 printf("    Batch size: %d, Tasks of each thread: %d\n    INPUT depth: %d, height: %d, width: %d\n    OUTPUT depth: %d, height: %d, width: %d\n",
-                    batch_size, thread_width, in_depth_, in_height_, in_width_, out_depth_, out_height_, out_width_);
+                    batch_size, THREAD_TASKS, in_depth_, in_height_, in_width_, out_depth_, out_height_, out_width_);
 #else
                 printf(" **** In ConvolutionalLayer::forward_batch ****\n");
                 int memory_access_per_thread = (in_depth_ * 2 * kernel_size_*kernel_size_ + 1 + 1)*sizeof(float);
@@ -204,8 +203,8 @@ namespace convnet{
                 float cpI = float(operations) / memory_access_per_thread;
                 float peak_bandwidth = 25.6; // Memory Bandwidth: 25.6 GB/s
 #ifdef BATCH_MORE
-                float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / thread_width / each_lasts / pow(2, 30); // GB/s
-                int all_ops = operations*out_depth_*out_width_*out_height_*(batch_size + thread_width -1) / thread_width;
+                float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / THREAD_TASKS / each_lasts / pow(2, 30); // GB/s
+                int all_ops = operations*out_depth_*out_width_*out_height_*(batch_size + THREAD_TASKS -1) / THREAD_TASKS;
 #else
                 float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / each_lasts / pow(2, 30); // GB/s
                 int all_ops = operations*out_depth_*out_width_*out_height_*batch_size;
