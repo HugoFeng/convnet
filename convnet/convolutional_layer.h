@@ -132,7 +132,6 @@ namespace convnet{
 
 #ifdef BATCH_MORE
                 std::string kernel_name = "forward_batch_more";
-                int thread_width = 4;
 #else
                 std::string kernel_name = "forward_batch";
 #endif
@@ -158,16 +157,62 @@ namespace convnet{
 
                 // execute the code on the device
                 int grpWidth = 20;
+
                 int global_width = jc::closestMultiple(out_depth_*out_width_, grpWidth);
 #ifdef BATCH_MORE
-                int global_height = jc::closestMultiple((batch_size+thread_width-1)/thread_width*out_height_, grpWidth);
+                int global_height = jc::closestMultiple((batch_size+THREAD_TASKS-1)/THREAD_TASKS*out_height_, grpWidth);
 #else
                 int global_height = jc::closestMultiple(batch_size*out_height_, grpWidth);
 #endif
                 cl::NDRange global(global_width, global_height);
                 cl::NDRange local(grpWidth, grpWidth);
-                cl_ulong t = jc::runAndTimeKernel(kernel, queue, global, local);
 
+#ifndef PROFILING
+                jc::runAndTimeKernel(kernel, queue, global, local);
+#else
+                int iteration = 100;                
+                int input_data_size = (batch_size*in_width_*in_height_*in_depth_
+                    + kernel_size_*kernel_size_*in_depth_*out_depth_
+                    + out_depth_ * out_width_* out_height_)*sizeof(cl_float);
+                int output_data_size = batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float);
+#ifdef BATCH_MORE
+                printf(" **** In ConvolutionalLayer::forward_batch_more ****\n");
+                int memory_access_per_thread = (in_depth_*kernel_size_*kernel_size_*(1+THREAD_TASKS) + THREAD_TASKS)*sizeof(float);
+                int operations = in_depth_*kernel_size_*kernel_size_*9
+                                    + in_depth_*THREAD_TASKS*kernel_size_*kernel_size_*15 + THREAD_TASKS*20;
+                printf("    Batch size: %d, Tasks of each thread: %d\n    INPUT depth: %d, height: %d, width: %d\n    OUTPUT depth: %d, height: %d, width: %d\n",
+                    batch_size, THREAD_TASKS, in_depth_, in_height_, in_width_, out_depth_, out_height_, out_width_);
+#else
+                printf(" **** In ConvolutionalLayer::forward_batch ****\n");
+                int memory_access_per_thread = (in_depth_ * 2 * kernel_size_*kernel_size_ + 1 + 1)*sizeof(float);
+                int operations = 22 + 26 * in_depth_*kernel_size_*kernel_size_;
+                printf("    Batch size: %d\n    INPUT depth: %d, height: %d, width: %d\n    OUTPUT depth: %d, height: %d, width: %d\n",
+                    batch_size, in_depth_, in_height_, in_width_, out_depth_, out_height_, out_width_);
+#endif
+                
+                
+                printf("    ==Running with>>> %d <<<Iterations==\n", iteration);
+
+                const clock_t begin_time = clock();
+                for (int i = 0; i < iteration; i++)
+                    jc::runAndTimeKernel(kernel, queue, global, local);
+                const float all_time = float(clock() - begin_time);
+
+                const float each_lasts = all_time / CLOCKS_PER_SEC / iteration; // seconds
+                std::cout << "    Time consumed for each iteration: " << each_lasts * 1000 << " ms" << std::endl;
+                float cpI = float(operations) / memory_access_per_thread;
+                float peak_bandwidth = 25.6; // Memory Bandwidth: 25.6 GB/s
+#ifdef BATCH_MORE
+                float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / THREAD_TASKS / each_lasts / pow(2, 30); // GB/s
+                int all_ops = operations*out_depth_*out_width_*out_height_*(batch_size + THREAD_TASKS -1) / THREAD_TASKS;
+#else
+                float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / each_lasts / pow(2, 30); // GB/s
+                int all_ops = operations*out_depth_*out_width_*out_height_*batch_size;
+#endif
+                printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size / 1e6, output_data_size / pow(2, 20));
+                printf("    CI: %.2g, ThoughPut: %.3g GB/s, Ops/Time= %.3g GFLOPS, CI*Bandwidth= %.3g GFLOPS\n",
+                       cpI, throughPut, all_ops/each_lasts/pow(2, 30), cpI*peak_bandwidth);
+#endif
                 output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);
                 // transfer destination data from the device to the host
                 queue.enqueueReadBuffer(output_batch_buf, CL_TRUE, 0, batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float), &output_batch_[0]);
@@ -187,6 +232,7 @@ namespace convnet{
             }
 
         }
+
 
 		void back_prop(){
 			g_.clear();

@@ -9,11 +9,7 @@
 #include "fullyconnected_layer.h"
 
 namespace convnet{
-#ifndef DEBUG
-    #define MAX_ITER 100000
-#else
-    #define MAX_ITER 2
-#endif
+#define MAX_ITER 2
 #define M 10
 #define END_CONDITION 1e-3
 	class ConvNet
@@ -131,6 +127,7 @@ namespace convnet{
 
         int test_once_batch(int batch_size){
             auto test_x_index = uniform_rand(0, test_size_ - batch_size);
+            std::cout<<"test_x_index: "<<test_x_index<<std::endl;
             layers.back()->exp_y_batch.resize(batch_size);
             // concatenate input vectors into one vector
             for (int b = 0; b < batch_size; b++){
@@ -144,6 +141,8 @@ namespace convnet{
                     layer->next->input_batch_ = layer->output_batch_;
                 }
             }
+
+            // collect batch results
             int count = 0;
             for (int batch = 0; batch < batch_size; batch++)
                 if ((int)test_y_[test_x_index + batch] == (int)max_iter(&(layers.back()->output_batch_[batch]), batch_size))
@@ -169,7 +168,8 @@ namespace convnet{
                 int out_depth = layers.back()->in_depth_;
                 for (int out = 0; out < out_depth; out++){
                     //printf("     Checking result of batch #%d out #%d...\n", batch, out);
-                    if (abs(this_output[out]-output_batch[out + batch*out_depth])>1e-3){
+                    float err = fabs(this_output[out]-output_batch[out + batch*out_depth]);
+                    if (err > 3e-3){
                         printf("   !!==Wrong output. Sample: #%d, Out: #%d, should be: %f, batch result: %f\n",
                             batch, out, this_output[out], output_batch[out + batch*out_depth]);
                         all_correct = false;

@@ -1,14 +1,4 @@
 #include "convnet.h"
-
-
-
-#include <exception>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <cstdlib>
-#include <vector>
-
 #include <JC/util.hpp>
 
 
@@ -52,8 +42,11 @@ int main(){
 #endif
 
 	n.train(test_x, test_y, 10000);
-    int test_sample_count = 20;
+    int test_sample_count = 100;
+    //Sleep(1000);
     printf("Testing with %d samples:\n", test_sample_count);
-    n.test(test_x, test_y, test_sample_count, 10);
+    const clock_t begin_time = clock();
+    n.test(test_x, test_y, test_sample_count, 100);
+    cout << "Time consumed in test: " << float(clock() - begin_time) / (CLOCKS_PER_SEC / 1000 ) <<" ms"<<endl;
 	return 0;
 }
