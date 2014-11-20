@@ -193,25 +193,24 @@ namespace convnet{
                 
                 printf("    ==Running with>>> %d <<<Iterations==\n", iteration);
 
-                const clock_t begin_time = clock();
+                cl_ulong t = 0; // time in nanosecond, 1e-9 second
                 for (int i = 0; i < iteration; i++)
-                    jc::runAndTimeKernel(kernel, queue, global, local);
-                const float all_time = float(clock() - begin_time);
+                    t += jc::runAndTimeKernel(kernel, queue, global, local);
 
-                const float each_lasts = all_time / CLOCKS_PER_SEC / iteration; // seconds
-                std::cout << "    Time consumed for each iteration: " << each_lasts * 1000 << " ms" << std::endl;
+                const float each_lasts = float(t) / iteration; // nano seconds
+                std::cout << "    Time consumed for each iteration: " << each_lasts / 1e6 << " ms" << std::endl;
                 float cpI = float(operations) / memory_access_per_thread;
                 float peak_bandwidth = 25.6; // Memory Bandwidth: 25.6 GB/s
 #ifdef BATCH_MORE
-                float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / THREAD_TASKS / each_lasts / pow(2, 30); // GB/s
-                int all_ops = operations*out_depth_*out_width_*out_height_*(batch_size + THREAD_TASKS -1) / THREAD_TASKS;
+                float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / THREAD_TASKS / each_lasts ; // GB/s
+                long long int all_ops = operations*out_depth_*out_width_*out_height_*(batch_size + THREAD_TASKS -1) / THREAD_TASKS;
 #else
-                float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / each_lasts / pow(2, 30); // GB/s
-                int all_ops = operations*out_depth_*out_width_*out_height_*batch_size;
+                float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / each_lasts; // GB/s
+                long long int all_ops = operations*out_depth_*out_width_*out_height_*batch_size;
 #endif
                 printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size / 1e6, output_data_size / pow(2, 20));
                 printf("    CI: %.2g, ThoughPut: %.3g GB/s, Ops/Time= %.3g GFLOPS, CI*Bandwidth= %.3g GFLOPS\n",
-                       cpI, throughPut, all_ops/each_lasts/pow(2, 30), cpI*peak_bandwidth);
+                       cpI, throughPut, all_ops/each_lasts, cpI*peak_bandwidth);
 #endif
                 output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);
                 // transfer destination data from the device to the host
