@@ -108,13 +108,15 @@ namespace convnet{
 
         size_t max_iter(float v[], size_t size){
             size_t i = 0;
-            float_t max = v[0];
+            float_t max = v[0]; //std::cout<< " raw output: "<<v[0]<<" ";
             for (size_t j = 1; j < size; j++){
+                //std::cout<< v[j] << " ";
                 if (v[j] > max){
                     max = v[j];
                     i = j;
                 }
             }
+            //std::cout<<std::endl;
             return i;
         }
         
@@ -157,8 +159,9 @@ namespace convnet{
 
             // collect batch results
             int count = 0;
-            for (int batch = 0; batch < batch_size; batch++)
-                if ((int)test_y_[test_x_index + batch] == (int)max_iter(&(layers.back()->output_batch_[batch]), batch_size))
+            int outlables = layers.back()->in_depth_;
+            for (int sample = 0; sample < batch_size; sample++)
+                if ((int)test_y_[test_x_index + sample] == (int)max_iter(&layers.back()->output_batch_[0] + sample*outlables, outlables))
                     count++;
             return count;
         }
@@ -188,6 +191,11 @@ namespace convnet{
                         all_correct = false;
                     }
                 }
+                int outlables = layers.back()->in_depth_;
+                int cpu_result = (int)max_iter(layers.back()->output_);
+                int gpu_result = (int)max_iter(&layers.back()->output_batch_[0] + sample*outlables, outlables);
+                if ( cpu_result != gpu_result)
+                    printf("result #%d mismatch: CPU output: %d, GPU output: %d\n", sample, cpu_result, gpu_result);
             }
             return all_correct;
         }
