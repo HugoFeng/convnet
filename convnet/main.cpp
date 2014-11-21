@@ -35,14 +35,8 @@ int main(){
 	n.add_layer(new ConvolutionalLayer(5, 5, 16, 5, 100));
 	n.add_layer(new FullyConnectedLayer(100, 10));
 
-#ifdef GPU
-    cout << "Using GPU:" << endl;
-#else
-    cout << "Using CPU:" << endl;
-#endif
-
 	n.train(test_x, test_y, 10000);
-    int test_sample_count = 100;
+    int test_sample_count = 1000;
     //Sleep(1000);
     printf("Testing with %d samples:\n", test_sample_count);
     const clock_t begin_time = clock();
