@@ -185,7 +185,7 @@ namespace convnet{
                 for (int out = 0; out < out_depth; out++){
                     //printf("     Checking result of batch #%d out #%d...\n", batch, out);
                     float err = fabs(this_output[out]-output_batch[out + sample*out_depth]);
-                    if (err > 3e-3){
+                    if (err > 5e-3){
                         printf("   !!==Wrong output. Sample: #%d, Out: #%d, should be: %f, batch result: %f\n",
                             sample, out, this_output[out], output_batch[out + sample*out_depth]);
                         all_correct = false;
