@@ -62,7 +62,7 @@ namespace convnet{
                 int result = 0;
 #ifdef GPU // Use GPU
                 result = test_once_batch(iter*batch_size, batch_size);
-                printf(" Running batch #%d, %d in %d is correct\n", iter, result, batch_size);
+                //printf(" Running batch #%d, %d in %d is correct\n", iter, result, batch_size);
     #ifdef CHECK_RESULT     // Check result of batch operations
                 bool check = check_batch_result(batch_size);
                 if (check)
@@ -142,7 +142,7 @@ namespace convnet{
         }
 
         int test_once_batch(int test_x_index, int batch_size){
-            std::cout<<"test_x_index: "<<test_x_index<<std::endl;
+            //std::cout<<"test_x_index: "<<test_x_index<<std::endl;
             layers.back()->exp_y_batch.resize(batch_size);
             // concatenate input vectors into one vector
             for (int s = 0; s < batch_size; s++){

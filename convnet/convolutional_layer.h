@@ -173,7 +173,7 @@ namespace convnet{
                 int iteration = 100;                
                 int input_data_size = (batch_size*in_width_*in_height_*in_depth_
                     + kernel_size_*kernel_size_*in_depth_*out_depth_
-                    + out_depth_ * out_width_* out_height_)*sizeof(cl_float);
+                    + batch_size*out_depth_ * out_width_* out_height_)*sizeof(cl_float);
                 int output_data_size = batch_size*out_width_*out_height_*out_depth_*sizeof(cl_float);
 #ifdef BATCH_MORE
                 printf(" **** In ConvolutionalLayer::forward_batch_more ****\n");
@@ -208,7 +208,7 @@ namespace convnet{
                 float throughPut = memory_access_per_thread * batch_size*out_depth_*out_width_*out_height_ / each_lasts; // GB/s
                 long long int all_ops = operations*out_depth_*out_width_*out_height_*batch_size;
 #endif
-                printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size / 1e6, output_data_size / pow(2, 20));
+                printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size / 1e6, output_data_size / 1e6);
                 printf("    CI: %.2g, ThoughPut: %.3g GB/s, Ops/Time= %.3g GFLOPS, CI*Bandwidth= %.3g GFLOPS\n",
                        cpI, throughPut, all_ops/each_lasts, cpI*peak_bandwidth);
 #endif
