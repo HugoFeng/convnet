@@ -54,14 +54,22 @@ namespace convnet{
 			int bang = 0;
 
 #ifdef GPU
+    #ifdef SIMPLE_PARALLEL
+            std::cout << "Testing with forward_parallel" << std::endl;
+    #else
             std::cout << "Testing with batch size of " << batch_size << std::endl;
+    #endif // SIMPLE_PARALLEL
 #else
             std::cout << "Testing with CPU " << std::endl;
 #endif // GPU
             while (iter < test_size_ / batch_size){
                 int result = 0;
 #ifdef GPU // Use GPU
+    #ifdef SIMPLE_PARALLEL
+                result = test_once_parallel(iter)?1:0;
+    #else
                 result = test_once_batch(iter*batch_size, batch_size);
+    #endif // SIMPLE_PARALLEL
                 //printf(" Running batch #%d, %d in %d is correct\n", iter, result, batch_size);
     #ifdef CHECK_RESULT     // Check result of batch operations
                 bool check = check_batch_result(batch_size);
@@ -135,6 +143,17 @@ namespace convnet{
 			}
 			return (int)test_y_[test_x_index] == (int)max_iter(layers.back()->output_);
 		}
+        
+        bool test_once_parallel(int test_x_index){
+            layers[0]->input_ = test_x_[test_x_index];
+            for (auto layer : layers){
+                layer->forward_gpu();
+                if (layer->next != nullptr){
+                    layer->next->input_ = layer->output_;
+                }
+            }
+            return (int)test_y_[test_x_index] == (int)max_iter(layers.back()->output_);
+        }
         
         int test_once_random_batch(int batch_size) {
             int test_x_index = uniform_rand(0, test_size_ - batch_size);
