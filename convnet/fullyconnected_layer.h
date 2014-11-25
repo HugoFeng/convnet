@@ -23,6 +23,8 @@ namespace convnet{
 				output_[out] = sigmod(dot(input_, get_W(out)) + b_[out]);
 			}
 		}
+        
+        void forward_gpu(){ forward_cpu(); }
 
         void forward_batch(int batch_size){
             output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);

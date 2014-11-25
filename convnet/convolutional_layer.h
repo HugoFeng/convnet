@@ -95,13 +95,47 @@ namespace convnet{
             queue.enqueueWriteBuffer(input_buf, CL_TRUE, 0, in_width_*in_height_*in_depth_*sizeof(cl_float), &input_[0]);
             queue.enqueueWriteBuffer(weight_buf, CL_TRUE, 0, kernel_size_*kernel_size_*in_depth_*out_depth_*sizeof(cl_float), &W_[0]);
             queue.enqueueWriteBuffer(b_buf, CL_TRUE, 0, out_depth_ * out_width_* out_height_*sizeof(cl_float), &b_[0]);
-
+                
             // execute the code on the device
             int grpWidth = 20;
-            cl::NDRange global(jc::closestMultiple(out_depth_*out_width_, grpWidth), 
+            cl::NDRange global(jc::closestMultiple(out_depth_*out_width_, grpWidth),
                                jc::closestMultiple(out_height_, grpWidth));
             cl::NDRange local(grpWidth, grpWidth);
-            cl_ulong t = jc::runAndTimeKernel(kernel, queue, global, local);
+
+#ifndef PROFILING
+            jc::runAndTimeKernel(kernel, queue, global, local);
+#else
+            int iteration = 1000;
+            int input_data_size = (in_width_*in_height_*in_depth_
+                                   + kernel_size_*kernel_size_*in_depth_*out_depth_
+                                   + out_depth_ * out_width_* out_height_)*sizeof(cl_float);
+            int output_data_size = out_width_*out_height_*out_depth_*sizeof(cl_float);
+
+            printf(" **** In ConvolutionalLayer::forward_parallel ****\n");
+            int memory_access_per_thread = (in_depth_ * kernel_size_*kernel_size_*2 + 1)*sizeof(float);
+            int operations = 14 + 21 * in_depth_*kernel_size_*kernel_size_;
+            printf("    INPUT depth: %d, height: %d, width: %d\n    OUTPUT depth: %d, height: %d, width: %d\n",
+                   in_depth_, in_height_, in_width_, out_depth_, out_height_, out_width_);
+            
+            
+            printf("    ==Running with>>> %d <<<Iterations==\n", iteration);
+            
+            cl_ulong t = 0; // time in nanosecond, 1e-9 second
+            for (int i = 0; i < iteration; i++)
+                t += jc::runAndTimeKernel(kernel, queue, global, local);
+            
+            const float each_lasts = float(t) / iteration; // nano seconds
+            std::cout << "    Time consumed for each iteration: " << each_lasts / 1e6 << " ms" << std::endl;
+            float cpI = float(operations) / memory_access_per_thread;
+
+            float peak_bandwidth = 25.6; // Memory Bandwidth: 25.6 GB/s
+            float throughPut = memory_access_per_thread * out_depth_*out_width_*out_height_ / each_lasts; // GB/s
+            long long int all_ops = operations*out_depth_*out_width_*out_height_;
+
+            printf("    Input Buffer size: %.2g MB, Output Buffer size: %.2g MB\n", input_data_size / 1e6, output_data_size / 1e6);
+            printf("    CI: %.2g, ThoughPut: %.3g GB/s, Ops/Time= %.3g GFLOPS, CI*Bandwidth= %.3g GFLOPS\n",
+                   cpI, throughPut, all_ops/each_lasts, cpI*peak_bandwidth);
+#endif // PROFILING
 
             // transfer destination data from the device to the host
             queue.enqueueReadBuffer(output_buf, CL_TRUE, 0, out_width_*out_height_*out_depth_*sizeof(cl_float), &output_[0]);

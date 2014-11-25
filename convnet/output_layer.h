@@ -22,6 +22,8 @@ namespace convnet{
 			}
 			output_ = input_;
 		}
+        
+        void forward_gpu(){ forward_cpu(); }
 
         void forward_batch(int batch_size){
             this->err = 0;

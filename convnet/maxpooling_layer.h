@@ -25,6 +25,8 @@ namespace convnet{
 				}
 			}
 		}
+        
+        void forward_gpu(){ forward_cpu(); }
 
         void forward_batch(int batch_size){
             output_batch_.resize(batch_size*out_depth_ * out_width_ * out_height_);
