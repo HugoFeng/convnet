@@ -16,10 +16,13 @@ namespace convnet{
 			exp_y_vec.clear();
 			exp_y_vec.resize(in_depth_);
 			exp_y_vec[this->exp_y] = 1;
+            printf("output: ");
 			for (size_t i = 0; i < in_depth_; i++){
 				err += 0.5 * (exp_y_vec[i] - input_[i]) *
 					(exp_y_vec[i] - input_[i]);
+                printf(" out[%d]: %f, ", i, input_[i]);
 			}
+            std::cout<<std::endl;
 			output_ = input_;
 		}
         

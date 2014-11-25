@@ -105,7 +105,7 @@ namespace convnet{
 #ifndef PROFILING
             jc::runAndTimeKernel(kernel, queue, global, local);
 #else
-            int iteration = 1000;
+            int iteration = 100;
             int input_data_size = (in_width_*in_height_*in_depth_
                                    + kernel_size_*kernel_size_*in_depth_*out_depth_
                                    + out_depth_ * out_width_* out_height_)*sizeof(cl_float);

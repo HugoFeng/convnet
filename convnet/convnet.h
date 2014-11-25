@@ -226,6 +226,7 @@ namespace convnet{
                 //auto train_x_index = iter % train_size_;
 				iter++;
 				auto train_x_index = uniform_rand(0, train_size_ - 1);
+                std::cout<< "train_x_index: "<< train_x_index<<std::endl;
 				layers[0]->input_ = train_x_[train_x_index];
 				layers.back()->exp_y = (int)train_y_[train_x_index];
 				/*
