@@ -199,6 +199,7 @@ namespace convnet{
 
                 const float each_lasts = float(t) / iteration; // nano seconds
                 std::cout << "    Time consumed for each iteration: " << each_lasts / 1e6 << " ms" << std::endl;
+                std::cout << "    Time consumed for each batch: " << each_lasts / batch_size / 1e6 << " ms" << std::endl;
                 float cpI = float(operations) / memory_access_per_thread;
                 float peak_bandwidth = 25.6; // Memory Bandwidth: 25.6 GB/s
 #ifdef BATCH_MORE

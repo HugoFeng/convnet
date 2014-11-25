@@ -100,7 +100,7 @@ __kernel void forward_batch(
     output_batch_buf[out_index] = sigmod(sum + b_buf[b_index]);
 }
 
-#define THREAD_TASKS 8
+#define THREAD_TASKS 4
 __kernel void forward_batch_more(
     __global float* input_batch_buf,
     __global float* weight_buf,

@@ -36,11 +36,11 @@ int main(){
 	n.add_layer(new FullyConnectedLayer(100, 10));
 
 	n.train(test_x, test_y, 10000);
-    int test_sample_count = 100;
+    int test_sample_count = 5;
     //Sleep(1000);
     printf("Testing with %d samples:\n", test_sample_count);
     const clock_t begin_time = clock();
-    n.test(test_x, test_y, test_sample_count, 100);
+    n.test(test_x, test_y, test_sample_count, 5);
     cout << "Time consumed in test: " << float(clock() - begin_time) / (CLOCKS_PER_SEC / 1000 ) <<" ms"<<endl;
 	return 0;
 }
