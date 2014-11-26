@@ -14,10 +14,10 @@ namespace convnet {
 	{
 	public:
 		Mnist_Parser(std::string data_path) :
-			test_img_fname(data_path + "t10k-images-idx3-ubyte"),
-			test_lbl_fname(data_path + "t10k-labels-idx1-ubyte"),
-			train_img_fname(data_path + "train-images-idx3-ubyte"),
-			train_lbl_fname(data_path + "train-labels-idx1-ubyte"){}
+			test_img_fname(data_path + "/t10k-images-idx3-ubyte"),
+			test_lbl_fname(data_path + "/t10k-labels-idx1-ubyte"),
+			train_img_fname(data_path + "/train-images-idx3-ubyte"),
+			train_lbl_fname(data_path + "/train-labels-idx1-ubyte"){}
 
 		std::vector<Sample*> load_testing(){
 			test_sample = load(test_img_fname, test_lbl_fname);
