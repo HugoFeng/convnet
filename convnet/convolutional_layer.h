@@ -41,12 +41,24 @@ namespace convnet{
 
             program = jc::buildProgram(KERNEL_PATH, context, devices);
         }
+        
+        // for profiling cpu
+        void forward_cpu() {
+#ifdef PROFILING
+            int iteration = 50;
+            printf(" **** In ConvolutionalLayer::forward_cpu ****\n");     
+            printf("    ==Running with>>> %d <<<Iterations==\n", iteration);
+            
+            const clock_t begin_time = clock();
+            for (int i = 0; i < iteration; i++)
+                forward_cpu_profiled();
+            std::cout << "    Time consumed for each iteration: " << float(clock() - begin_time) / iteration / (CLOCKS_PER_SEC / 1000 ) << " ms" << std::endl;
+#else
+            forward_cpu_profiled();
+#endif // PROFILING
+        }
 
-		void forward(){
-            forward_cpu();
-		}
-
-        void forward_cpu(){  
+        void forward_cpu_profiled(){
             std::fill(output_.begin(), output_.end(), 0);
             for (size_t out = 0; out < out_depth_; out++){  /* for each output feature map */
             	for (size_t in = 0; in < in_depth_; in++){  /* for each input feature map */
